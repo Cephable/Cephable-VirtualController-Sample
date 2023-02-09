@@ -27,3 +27,5 @@ You can also send events over the hub to get the latest configuration informatio
 - `connection.SendAsync("VerifySelf")`
 - `connection.SendAsync("DeviceStartedListening")`
 - `connection.SendAsync("DeviceStoppedListening")`
+
+Checkout the tutorials at https://enabledplay.com/tutorials for how to use the Enabled Play app to build profiles and send commands
