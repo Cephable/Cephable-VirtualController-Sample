@@ -1,0 +1,12 @@
+{
+  "name": "enabledplay-virtualcontroller-sample",
+  "version": "1.0.0",
+  "description": "a sample web application for setting up a virtual controller and receive commands",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Enabled Play",
+  "license": "MIT"
+}

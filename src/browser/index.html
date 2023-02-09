@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.2/signalr.min.js"
+        integrity="sha512-YXK3VHvk8oUFEYl3/DkoQ8dRIQWl7+igjOu1kW5TWKqdrvxCcQU6XgpzFSNMSO6ectu0EedR0aRcGcDFuW7eCA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const apiBaseUrl = "https://services.enabledplay.com/";
+        let deviceToken = null;
+        let accessToken = null;
+        let clientId = null;
+        const signIn = async () => {
+            clientId = document.getElementById("client_id_field").value;
+            if (!clientId) {
+                alert("Please enter your Enabled Play Client Id");
+                return;
+            }
+            localStorage.setItem("clientId", clientId)
+            const redirectUri = window.location.origin + window.location.pathname;
+            const authUrl = `https://services.enabledplay.com/signin?redirect_uri=${encodeURIComponent(redirectUri)}&client_id=${clientId}`;
+            window.location.href = authUrl;
+        };
+
+        const getAccessToken = async (code) => {
+            const redirectUri = window.location.origin + window.location.pathname;
+            const response = await axios.post(`${apiBaseUrl}signin/token?client_id=${clientId}&code=${code}&redirect_uri=${encodeURI(redirectUri)}&grant_type=code`);
+            return response.data.access_token;
+        }
+
+        const createUserDevice = async (deviceTypeId) => {
+            const response = await axios.post(`${apiBaseUrl}api/Device/userDevices/new/${deviceTypeId}`);
+            return response.data;
+        };
+
+        const createUserDeviceToken = async (userDeviceId) => {
+            const response = await axios.post(`${apiBaseUrl}api/Device/userDevices/${userDeviceId}/tokens`);
+            return response.data.token;
+        };
+
+        const startSignalRConnection = async () => {
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("https://services.enabledplay.com/device", {
+                    accessTokenFactory: () => deviceToken,
+                    headers: {
+                        "X-Device-Token": deviceToken
+                    }
+                })
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("DeviceCommand", function (command) {
+                console.log("Received command: " + command);
+            });
+
+            await connection.start({withCredentials: false})
+                .then(async function () {
+                    console.log("Connected to hub. Waiting for commands...");
+                    await connection.invoke("VerifySelf")
+                })
+                .catch(function (err) {
+                    return console.error(err.toString());
+                });
+        };
+
+        const main = async () => {
+            var existingDevice = localStorage.getItem("device");
+            if (existingDevice) {
+                existingDevice = JSON.parse(existingDevice);
+                console.log(existingDevice)
+                deviceToken = localStorage.getItem("deviceToken");
+                accessToken = localStorage.getItem("accessToken");
+                await startSignalRConnection();
+
+                document.getElementById("sign_in_button").style.display = "none";
+                document.getElementById("client_id_field").style.display = "none";
+
+                return;
+            }
+
+            const params = new URLSearchParams(window.location.search);
+            if (!params.has("code")) {
+                return;
+            }
+            var existingDevice = localStorage.getItem("device");
+            if (existingDevice) {
+                existingDevice = JSON.parse(existingDevice);
+                console.log(existingDevice)
+                deviceToken = localStorage.getItem("deviceToken");
+                accessToken = localStorage.getItem("accessToken");
+                await startSignalRConnection();
+                return;
+            }
+
+            clientId = localStorage.getItem("clientId");
+
+            const code = params.get("code");
+            accessToken = await getAccessToken(code);
+            // set the default authorization header for axios
+            axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+            localStorage.setItem("accessToken", accessToken);
+
+            const deviceTypeId = '3ae3d1ed-97b7-4572-a57a-00d4724270a0'; // Change this to your device type id
+            const userDevice = await createUserDevice(deviceTypeId);
+            localStorage.setItem("device", JSON.stringify(userDevice));
+            deviceToken = await createUserDeviceToken(userDevice.id);
+            localStorage.setItem("deviceToken", deviceToken);
+            await startSignalRConnection();
+        };
+
+        main();
+    </script>
+</head>
+
+<body>
+    <h1>Enabled Play Virtual Controller Sample</h1>
+    <p>Checkout the Readme.md for more instructions</p>
+    <input id="client_id_field" placeholder="Enter your Enabled Play Client Id" />
+    <button id="sign_in_button" onclick="signIn()">Sign In</button>
+    <p>Waiting for commands... Check the console to view them</p>
+</body>
+
+</html>
