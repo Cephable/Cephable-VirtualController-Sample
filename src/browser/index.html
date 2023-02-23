@@ -52,6 +52,12 @@
 
             connection.on("DeviceCommand", function (command) {
                 console.log("Received command: " + command);
+
+                const commandsList = document.getElementById("commands");
+                const li = document.createElement("li");
+                li.appendChild(document.createTextNode(command));
+                commandsList.appendChild(li);
+                
             });
 
             await connection.start({withCredentials: false})
@@ -119,6 +125,8 @@
     <input id="client_id_field" placeholder="Enter your Enabled Play Client Id" />
     <button id="sign_in_button" onclick="signIn()">Sign In</button>
     <p>Waiting for commands... Check the console to view them</p>
+    <ul id="commands">
+    </ul>
 </body>
 
 </html>
