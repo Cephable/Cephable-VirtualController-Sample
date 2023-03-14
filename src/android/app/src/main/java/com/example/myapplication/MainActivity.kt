@@ -18,7 +18,7 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-    private val clientId = "f64b1a12-5b56-4f9f-b370-fe58557dc5bf"
+    private val clientId = "your-client-id"
     private val authRedirectUri = "enabledplay-samples://"
     private val deviceTypeId = "3ae3d1ed-97b7-4572-a57a-00d4724270a0" // Change this to your device type id
     private val state = UUID.randomUUID().toString()
