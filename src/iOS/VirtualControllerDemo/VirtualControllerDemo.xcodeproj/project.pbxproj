@@ -45,6 +45,7 @@
 		C925C4B829C01C1500756F97 /* VirtualControllerDemoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VirtualControllerDemoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C925C4BC29C01C1500756F97 /* VirtualControllerDemoUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VirtualControllerDemoUITests.swift; sourceTree = "<group>"; };
 		C925C4BE29C01C1500756F97 /* VirtualControllerDemoUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VirtualControllerDemoUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		C925C4CE29C0BA5500756F97 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,6 +97,7 @@
 		C925C4A029C01C1300756F97 /* VirtualControllerDemo */ = {
 			isa = PBXGroup;
 			children = (
+				C925C4CE29C0BA5500756F97 /* Info.plist */,
 				C925C4A129C01C1300756F97 /* VirtualControllerDemoApp.swift */,
 				C925C4A329C01C1300756F97 /* ContentView.swift */,
 				C925C4A529C01C1500756F97 /* Assets.xcassets */,
@@ -427,6 +429,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"VirtualControllerDemo/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = VirtualControllerDemo/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -455,6 +458,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"VirtualControllerDemo/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = VirtualControllerDemo/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

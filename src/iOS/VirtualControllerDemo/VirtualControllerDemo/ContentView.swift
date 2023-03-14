@@ -6,10 +6,11 @@
 //
 
 import SwiftUI
+import SignalRClient
 
 struct ContentView: View {
     
-    private let clientId = "your-client-id"
+    private let clientId = "f64b1a12-5b56-4f9f-b370-fe58557dc5bf" //"your-client-id"
     private let authRedirectUri = "enabledplay-samples://"
     private let deviceTypeId = "3ae3d1ed-97b7-4572-a57a-00d4724270a0" // Change this to your device type id
     private let state = UUID().uuidString
@@ -21,7 +22,14 @@ struct ContentView: View {
     @State private var command: String = "This is where your latest command will be"
     
     // TODO: handle signalr setup
-    //private var hubConnection: HubConnection?
+    @State private var hubConnection: HubConnection?
+    
+    init(authCode: String?) {
+        if(authCode != nil) {
+            exchangeCodeForTokens(code: authCode!)
+        }
+    }
+    
     
     var body: some View {
         VStack {
@@ -49,7 +57,7 @@ struct ContentView: View {
             updateState()
             if deviceToken != nil {
                 // TODO
-                //connect()
+                connect()
             }
         })
     }
@@ -91,7 +99,7 @@ struct ContentView: View {
         if accessToken != nil {
             connectionStatus = "Signed In"
         } else {
-            connectionStatus = "Signed Out"
+            connectionStatus = "Signed Out - sign in with your Enabled Play account to register a new virtual controller and get started"
         }
 //
 //        if hubConnection?.state == .connected {
@@ -203,6 +211,21 @@ struct ContentView: View {
         task.resume()
     }
     
+    func connect() -> Void {
+        // TODO: handle when connected to not try again
+        
+        hubConnection = HubConnectionBuilder(url: URL(string: "https://services.enabledplay.com/device")!)
+            .withAutoReconnect().withHttpConnectionOptions(configureHttpOptions: { (options: HttpConnectionOptions) in
+                options.headers = ["X-DEVICE-TOKEN": deviceToken!]
+                options.accessTokenProvider = { return deviceToken! }
+            }).build()
+        
+        hubConnection?.on(method: "DeviceCommand", callback: {(message: String) in
+                print(message)
+                command = message
+        })
+    }
+    
     private func saveValue(key: String, value: String) -> Void{
         UserDefaults.standard.set(value, forKey: key)
     }
@@ -210,6 +233,6 @@ struct ContentView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        ContentView(authCode: nil)
     }
 }
