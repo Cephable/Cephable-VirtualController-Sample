@@ -35,18 +35,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         textView = findViewById(R.id.textView)
-        authButton = findViewById(R.id.signInButton)
+        authButton = findViewById(R.id.authButton)
         commandTextView = findViewById(R.id.command)
         authButton!!.setOnClickListener {
-            val authUri = Uri.parse("https://services.enabledplay.com/signin")
-                .buildUpon()
-                .appendQueryParameter("client_id", clientId)
-                .appendQueryParameter("state", state)
-                .appendQueryParameter("redirect_uri", authRedirectUri)
-                .build()
-
-            val intent = Intent(Intent.ACTION_VIEW, authUri)
-            startActivity(intent)
+            if(accessToken != null) {
+                signOut()
+                return@setOnClickListener
+            }
+            signIn()
         }
 
         loadState()
@@ -56,6 +52,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun signOut() {
+        accessToken = null
+        refreshToken = null
+        userDeviceId = null
+        deviceToken = null
+        saveValue("accessToken", "")
+        saveValue("refreshToken", "")
+        saveValue("userDeviceId", "")
+        saveValue("deviceToken", "")
+    }
+    fun signIn() {val authUri = Uri.parse("https://services.enabledplay.com/signin")
+        .buildUpon()
+        .appendQueryParameter("client_id", clientId)
+        .appendQueryParameter("state", state)
+        .appendQueryParameter("redirect_uri", authRedirectUri)
+        .build()
+
+        val intent = Intent(Intent.ACTION_VIEW, authUri)
+        startActivity(intent)
+
+    }
     override fun onResume() {
         super.onResume()
 
@@ -94,7 +111,9 @@ class MainActivity : AppCompatActivity() {
     private fun updateState() {
 
         if(accessToken != null) {
-            authButton?.visibility = Button.INVISIBLE
+            authButton?.text = "Sign Out"
+        } else {
+            authButton?.text = "Sign In"
         }
         if(hubConnection?.connectionState == HubConnectionState.CONNECTED) {
             textView?.text = "Connected and Ready for Commands. Use the Enabled Play app to start sending commands with virtual buttons or expression controls"
