@@ -7,13 +7,20 @@ To try these sample out, you'll first need to create an Enabled Play account by 
 
 You'll then need to request a licensed API client ID, key, and virtual controller device type ID from Enabled Play. Contact support@enabledplay.com for more information.
 
-## Get Started - Browser
+## Get Started - Browser / JavaScript
 
 To use the browser example, run `npm run start` from the `browser` folder to start a node server at http://localhost:3000
 
 From here you need your client ID to paste in the field and then click "Sign In" to be taken to the Enabled Play login screen. Once you login, you will be redirected back to your localhost app which will then use the Enabled Play API to create a new virtual controller, controller token, and connect to the controller hub.
 
 Once it is connected, it is ready to receive commands. Open the console in the browser, and then open the virtual controller from the Enabled Play app, give it a profile, and send commands. You'll see the commands log to the console.
+
+## Get Started - Android / Kotlin
+
+To use the browser example, open the gradle project in Android Studio and ensure you have >= SDK version 31 installed for the Android SDK.
+In the `MainActivity.kt` you can set your client ID acquired from the Enabled Play team.
+
+Then you can run the app on a local device or emulator. Simply tap the "Sign In" button, sign in with your Enabled Play account and the app will generate an Enabled Play Virtual Controller in your app and wait for commands. You can then run both this app and the Enabled Play app at the same time on any Android device. Use Enabled Play expression controls or hotkeys to send commands and see the latest received command appear in the sample app. You can also a secondary device with the Enabled Play app to send commands to your app.
 
 ## Get Started - C# / .NET
 
