@@ -10,7 +10,7 @@ import SignalRClient
 
 struct ContentView: View {
     
-    private let clientId = "your-client-id"
+    private let clientId = "f64b1a12-5b56-4f9f-b370-fe58557dc5bf"
     private let authRedirectUri = "enabledplay-samples://"
     private let deviceTypeId = "3ae3d1ed-97b7-4572-a57a-00d4724270a0" // Change this to your device type id
     private let state = UUID().uuidString
@@ -25,7 +25,7 @@ struct ContentView: View {
     @State private var hubConnection: HubConnection?
     
     init(authCode: String?) {
-        if(authCode != nil) {
+        if(authCode != nil && accessToken == nil) {
             exchangeCodeForTokens(code: authCode!)
         }
     }
@@ -56,7 +56,6 @@ struct ContentView: View {
             loadState()
             updateState()
             if deviceToken != nil {
-                // TODO
                 connect()
             }
         })
@@ -101,12 +100,12 @@ struct ContentView: View {
         } else {
             connectionStatus = "Signed Out - sign in with your Enabled Play account to register a new virtual controller and get started"
         }
-//
-//        if hubConnection?.state == .connected {
-//            connectionStatus = "Connected and Ready for Commands. Use the Enabled Play app to start sending commands with virtual buttons or expression controls"
-//        } else {
-//            connectionStatus = "Disconnected. Try restarting the app or signing out to try again"
-//        }
+        //
+        //        if hubConnection?.state == .connected {
+        //            connectionStatus = "Connected and Ready for Commands. Use the Enabled Play app to start sending commands with virtual buttons or expression controls"
+        //        } else {
+        //            connectionStatus = "Disconnected. Try restarting the app or signing out to try again"
+        //        }
     }
     
     private func exchangeCodeForTokens(code: String) {
@@ -125,7 +124,7 @@ struct ContentView: View {
             .map({ (key, value) in "\(key)=\(value)" })
             .joined(separator: "&")
             .data(using: .utf8)
-
+        
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 // Handle the failure case
@@ -133,7 +132,7 @@ struct ContentView: View {
                 print(error)
                 return
             }
-
+            
             guard let data = data,
                   let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
@@ -149,15 +148,15 @@ struct ContentView: View {
                 self.saveValue(key: "accessToken", value: accessToken)
                 self.saveValue(key: "refreshToken", value: refreshToken)
                 self.createUserDevice(deviceTypeId: self.deviceTypeId)
-               
+                
                 self.createUserDeviceToken(userDeviceId: self.userDeviceId!)
-               
+                
             }
         }
         task.resume()
     }
     
-
+    
     private func createUserDevice(deviceTypeId: String) -> Void{
         let url = URL(string: "https://services.enabledplay.com/api/Device/userDevices/new/\(deviceTypeId)")!
         var request = URLRequest(url: url)
@@ -169,13 +168,13 @@ struct ContentView: View {
                 print(error)
                 return
             }
-
+            
             guard let data = data,
                   let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
                 return
             }
-
+            
             if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                 userDeviceId = json["id"] as? String
                 self.saveValue(key: "userDeviceId", value: userDeviceId!)
@@ -196,13 +195,13 @@ struct ContentView: View {
                 print(error)
                 return
             }
-
+            
             guard let data = data,
                   let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
                 return
             }
-
+            
             if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                 deviceToken = json["token"] as? String
                 self.saveValue(key: "deviceToken", value: deviceToken!)
@@ -218,16 +217,55 @@ struct ContentView: View {
             .withAutoReconnect().withHttpConnectionOptions(configureHttpOptions: { (options: HttpConnectionOptions) in
                 options.headers = ["X-DEVICE-TOKEN": deviceToken!]
                 options.accessTokenProvider = { return deviceToken! }
-            }).build()
+            })
+            .withHubConnectionDelegate(delegate: HubDelegate(view: self))
+            .build()
         
         hubConnection?.on(method: "DeviceCommand", callback: {(message: String) in
-                print(message)
-                command = message
+            print(message)
+            command = message
+        })
+        
+        hubConnection?.start()
+        
+    }
+    
+    func connectionComplete() {
+        
+        hubConnection?.invoke(method: "VerifySelf", invocationDidComplete: {err in
+            print(err)
         })
     }
     
     private func saveValue(key: String, value: String) -> Void{
         UserDefaults.standard.set(value, forKey: key)
+    }
+}
+
+class HubDelegate: HubConnectionDelegate {
+    var view: ContentView
+    init(view: ContentView) {
+        self.view = view
+    }
+    
+    func connectionDidOpen(hubConnection: HubConnection) {
+        view.connectionComplete()
+    }
+    
+    func connectionDidFailToOpen(error: Error) {
+        
+    }
+    
+    func connectionDidClose(error: Error?) {
+        
+    }
+    
+    func connectionWillReconnect(error: Error) {
+        
+    }
+    
+    func connectionDidReconnect() {
+        
     }
 }
 
