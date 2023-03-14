@@ -14,6 +14,7 @@
 		C925C4B329C01C1500756F97 /* VirtualControllerDemoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C925C4B229C01C1500756F97 /* VirtualControllerDemoTests.swift */; };
 		C925C4BD29C01C1500756F97 /* VirtualControllerDemoUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C925C4BC29C01C1500756F97 /* VirtualControllerDemoUITests.swift */; };
 		C925C4BF29C01C1500756F97 /* VirtualControllerDemoUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C925C4BE29C01C1500756F97 /* VirtualControllerDemoUITestsLaunchTests.swift */; };
+		C925C4CD29C0B78300756F97 /* SignalRClient in Frameworks */ = {isa = PBXBuildFile; productRef = C925C4CC29C0B78300756F97 /* SignalRClient */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,6 +52,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C925C4CD29C0B78300756F97 /* SignalRClient in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -143,6 +145,9 @@
 			dependencies = (
 			);
 			name = VirtualControllerDemo;
+			packageProductDependencies = (
+				C925C4CC29C0B78300756F97 /* SignalRClient */,
+			);
 			productName = VirtualControllerDemo;
 			productReference = C925C49E29C01C1300756F97 /* VirtualControllerDemo.app */;
 			productType = "com.apple.product-type.application";
@@ -215,6 +220,9 @@
 				Base,
 			);
 			mainGroup = C925C49529C01C1300756F97;
+			packageReferences = (
+				C925C4CB29C0B78300756F97 /* XCRemoteSwiftPackageReference "SignalR-Client-Swift" */,
+			);
 			productRefGroup = C925C49F29C01C1300756F97 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -577,6 +585,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C925C4CB29C0B78300756F97 /* XCRemoteSwiftPackageReference "SignalR-Client-Swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/moozzyk/SignalR-Client-Swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C925C4CC29C0B78300756F97 /* SignalRClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C925C4CB29C0B78300756F97 /* XCRemoteSwiftPackageReference "SignalR-Client-Swift" */;
+			productName = SignalRClient;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C925C49629C01C1300756F97 /* Project object */;
 }

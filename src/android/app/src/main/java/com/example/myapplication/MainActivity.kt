@@ -61,6 +61,8 @@ class MainActivity : AppCompatActivity() {
         saveValue("refreshToken", "")
         saveValue("userDeviceId", "")
         saveValue("deviceToken", "")
+
+        updateState()
     }
     fun signIn() {val authUri = Uri.parse("https://services.enabledplay.com/signin")
         .buildUpon()
