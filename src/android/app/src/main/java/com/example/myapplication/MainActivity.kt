@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
         authButton = findViewById(R.id.authButton)
         commandTextView = findViewById(R.id.command)
         authButton!!.setOnClickListener {
-            if(accessToken != null) {
+            if(accessToken?.isNullOrEmpty() == false) {
                 signOut()
                 return@setOnClickListener
             }
@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
 
         loadState()
         updateState()
-        if(deviceToken != null) {
+        if(deviceToken?.isNullOrEmpty() == false) {
             connect()
         }
     }
@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         }
         loadState()
         updateState()
-        if(deviceToken != null) {
+        if(deviceToken?.isNullOrEmpty() == false) {
             connect()
         }
     }
@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateState() {
 
-        if(accessToken != null) {
+        if(accessToken?.isNullOrEmpty() == false) {
             authButton?.text = "Sign Out"
         } else {
             authButton?.text = "Sign In"
@@ -193,7 +193,7 @@ class MainActivity : AppCompatActivity() {
         updateState()
 
     }
-    fun saveValue(key: String, value: String) {
+    fun saveValue(key: String, value: String?) {
         val sharedPref = this.getPreferences(MODE_PRIVATE) ?: return
         with (sharedPref.edit()) {
             putString(key, value)
