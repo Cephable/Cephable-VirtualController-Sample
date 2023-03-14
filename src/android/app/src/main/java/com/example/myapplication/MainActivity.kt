@@ -6,7 +6,9 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import com.microsoft.signalr.HubConnection
 import com.microsoft.signalr.HubConnectionBuilder
+import com.microsoft.signalr.HubConnectionState
 import io.reactivex.rxjava3.core.Single
 import okhttp3.*
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -22,14 +24,19 @@ class MainActivity : AppCompatActivity() {
     private val state = UUID.randomUUID().toString()
     private var accessToken: String? = null
     private var refreshToken: String? = null
+    private var userDeviceId: String? = null
+    private var deviceToken: String? = null
     private var authButton: Button? = null
     private var textView: TextView? = null
+    private var commandTextView: TextView? = null
+    private var hubConnection: HubConnection? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         textView = findViewById(R.id.textView)
-        authButton = findViewById<Button>(R.id.signInButton)
+        authButton = findViewById(R.id.signInButton)
+        commandTextView = findViewById(R.id.command)
         authButton!!.setOnClickListener {
             val authUri = Uri.parse("https://services.enabledplay.com/signin")
                 .buildUpon()
@@ -40,6 +47,12 @@ class MainActivity : AppCompatActivity() {
 
             val intent = Intent(Intent.ACTION_VIEW, authUri)
             startActivity(intent)
+        }
+
+        loadState()
+        updateState()
+        if(deviceToken != null) {
+            connect()
         }
     }
 
@@ -56,7 +69,42 @@ class MainActivity : AppCompatActivity() {
                 // Handle the case where the user denied the authorization request
             }
         }
+        loadState()
+        updateState()
+        if(deviceToken != null) {
+            connect()
+        }
     }
+
+    private fun setStatusText(text: String) {
+        textView?.text = text
+    }
+
+    private fun loadState() {
+        // load state from shared preferences
+        val sharedPref = this.getPreferences(MODE_PRIVATE) ?: return
+        accessToken = sharedPref.getString("accessToken", null)
+        refreshToken = sharedPref.getString("refreshToken", null)
+        userDeviceId = sharedPref.getString("userDeviceId", null)
+        deviceToken = sharedPref.getString("deviceToken", null)
+
+    }
+
+
+    private fun updateState() {
+
+        if(accessToken != null) {
+            authButton?.visibility = Button.INVISIBLE
+        }
+        if(hubConnection?.connectionState == HubConnectionState.CONNECTED) {
+            textView?.text = "Connected and Ready for Commands. Use the Enabled Play app to start sending commands with virtual buttons or expression controls"
+        }
+        else {
+            textView?.text = "Disconnected. Try restarting the app or signing out to try again"
+        }
+    }
+
+
 
     private val client = OkHttpClient()
     private fun exchangeCodeForTokens(code: String) {
@@ -76,6 +124,7 @@ class MainActivity : AppCompatActivity() {
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 // Handle the failure case
+                setStatusText(e.message.toString())
                 print(e)
             }
 
@@ -91,25 +140,10 @@ class MainActivity : AppCompatActivity() {
 
                     // Create a user device
                     val userDevice = createUserDevice(deviceTypeId)
-                    val userDeviceId = userDevice.getString("id")
-                    val deviceToken = createUserDeviceToken(userDeviceId)
-                    saveValue("userDeviceId", userDeviceId)
-                    saveValue("deviceToken", deviceToken)
-
-                    // connect to signalr hub
-                    val hubConnection = HubConnectionBuilder.create("https://services.enabledplay.com/device")
-                        .withHeader("X-Device-Token", deviceToken)
-                        .withAccessTokenProvider(Single.defer { Single.just(accessToken!!) })
-                        .build()
-
-                    hubConnection.on("DeviceCommand", { command ->
-                        runOnUiThread {
-                            textView!!.text = command.toString()
-                        }
-                    }, String::class.java)
-
-                    hubConnection.start().blockingAwait()
-                    hubConnection.send("VerifySelf")
+                    userDeviceId = userDevice.getString("id")
+                    deviceToken = createUserDeviceToken(userDeviceId!!)
+                    saveValue("userDeviceId", userDeviceId!!)
+                    saveValue("deviceToken", deviceToken!!)
 
 
                 } else {
@@ -119,6 +153,27 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    private fun connect() {
+        if(hubConnection?.connectionState == HubConnectionState.CONNECTED) {
+            return
+        }
+        // connect to signalr hub
+        hubConnection = HubConnectionBuilder.create("https://services.enabledplay.com/device")
+            .withHeader("X-Device-Token", deviceToken)
+            .withAccessTokenProvider(Single.defer { Single.just(accessToken!!) })
+            .build()
+
+        hubConnection!!.on("DeviceCommand", { command ->
+            runOnUiThread {
+                commandTextView!!.text = command.toString()
+            }
+        }, String::class.java)
+
+        hubConnection!!.start().blockingAwait()
+        hubConnection!!.send("VerifySelf")
+        updateState()
+
+    }
     fun saveValue(key: String, value: String) {
         val sharedPref = this.getPreferences(MODE_PRIVATE) ?: return
         with (sharedPref.edit()) {
