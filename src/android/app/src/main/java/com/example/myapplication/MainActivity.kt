@@ -16,7 +16,7 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-    private val clientId = "your-client-id"
+    private val clientId = "f64b1a12-5b56-4f9f-b370-fe58557dc5bf"
     private val authRedirectUri = "enabledplay-samples://"
     private val deviceTypeId = "3ae3d1ed-97b7-4572-a57a-00d4724270a0" // Change this to your device type id
     private val state = UUID.randomUUID().toString()
@@ -64,6 +64,8 @@ class MainActivity : AppCompatActivity() {
         val body = FormBody.Builder()
             .add("client_id", clientId)
             .add("code", code)
+            .add("grant_type", "code")
+            .add("redirect_uri", authRedirectUri)
             .build()
 
         val request = Request.Builder()
@@ -74,6 +76,7 @@ class MainActivity : AppCompatActivity() {
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 // Handle the failure case
+                print(e)
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -105,9 +108,9 @@ class MainActivity : AppCompatActivity() {
                         }
                     }, String::class.java)
 
-                    hubConnection.start().andThen { _ ->
-                        hubConnection.send("VerifySelf")
-                    }
+                    hubConnection.start().blockingAwait()
+                    hubConnection.send("VerifySelf")
+
 
                 } else {
                     // Handle the non-successful response case
