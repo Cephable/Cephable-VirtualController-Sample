@@ -78,8 +78,8 @@
             filePath = "VirtualControllerDemo/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "216"
-            endingLineNumber = "216"
+            startingLineNumber = "218"
+            endingLineNumber = "218"
             landmarkName = "connect()"
             landmarkType = "7">
          </BreakpointContent>
@@ -94,8 +94,8 @@
             filePath = "VirtualControllerDemo/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "252"
-            endingLineNumber = "252"
+            startingLineNumber = "254"
+            endingLineNumber = "254"
             landmarkName = "connectionDidOpen(hubConnection:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -110,13 +110,13 @@
             filePath = "VirtualControllerDemo/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "235"
-            endingLineNumber = "235"
+            startingLineNumber = "237"
+            endingLineNumber = "237"
             landmarkName = "connectionComplete()"
-            landmarkType = "7">
+            landmarkType = "9">
             <Locations>
                <Location
-                  uuid = "92D97E42-A439-4A13-92CB-3463EB3DC29A - cbe07cc3d3df7789"
+                  uuid = "92D97E42-A439-4A13-92CB-3463EB3DC29A - cbe07cc3d3df774b"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -126,12 +126,12 @@
                   urlString = "file:///Users/alexdunn/Projects/EnabledPlay-VirtualController-Sample/src/iOS/VirtualControllerDemo/VirtualControllerDemo/ContentView.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "235"
-                  endingLineNumber = "235"
+                  startingLineNumber = "237"
+                  endingLineNumber = "237"
                   offsetFromSymbolStart = "30">
                </Location>
                <Location
-                  uuid = "92D97E42-A439-4A13-92CB-3463EB3DC29A - e89ba9c704c5838c"
+                  uuid = "92D97E42-A439-4A13-92CB-3463EB3DC29A - e89ba9c704c583ce"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -141,8 +141,8 @@
                   urlString = "file:///Users/alexdunn/Projects/EnabledPlay-VirtualController-Sample/src/iOS/VirtualControllerDemo/VirtualControllerDemo/ContentView.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "236"
-                  endingLineNumber = "236"
+                  startingLineNumber = "238"
+                  endingLineNumber = "238"
                   offsetFromSymbolStart = "24">
                </Location>
             </Locations>

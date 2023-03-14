@@ -212,7 +212,9 @@ struct ContentView: View {
     
     func connect() -> Void {
         // TODO: handle when connected to not try again
-        
+        if(deviceToken == nil || deviceToken == ""){
+            return
+        }
         hubConnection = HubConnectionBuilder(url: URL(string: "https://services.enabledplay.com/device")!)
             .withAutoReconnect().withHttpConnectionOptions(configureHttpOptions: { (options: HttpConnectionOptions) in
                 options.headers = ["X-DEVICE-TOKEN": deviceToken!]
