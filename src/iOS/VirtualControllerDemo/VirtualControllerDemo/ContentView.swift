@@ -93,7 +93,7 @@ struct ContentView: View {
         } else {
             connectionStatus = "Signed Out"
         }
-//        
+//
 //        if hubConnection?.state == .connected {
 //            connectionStatus = "Connected and Ready for Commands. Use the Enabled Play app to start sending commands with virtual buttons or expression controls"
 //        } else {
@@ -101,6 +101,111 @@ struct ContentView: View {
 //        }
     }
     
+    private func exchangeCodeForTokens(code: String) {
+        let url = URL(string: "https://services.enabledplay.com/signin/token")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        let parameters: [String: String] = [
+            "client_id": clientId,
+            "code": code,
+            "grant_type": "code",
+            "redirect_uri": authRedirectUri
+        ]
+        request.httpBody = parameters
+            .map({ (key, value) in "\(key)=\(value)" })
+            .joined(separator: "&")
+            .data(using: .utf8)
+
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                // Handle the failure case
+                self.setStatusText(text: error.localizedDescription)
+                print(error)
+                return
+            }
+
+            guard let data = data,
+                  let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                // Handle the non-successful response case
+                return
+            }
+            
+            if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+               let accessToken = json["access_token"] as? String,
+               let refreshToken = json["refresh_token"] as? String {
+                self.accessToken = accessToken
+                self.refreshToken = refreshToken
+                self.saveValue(key: "accessToken", value: accessToken)
+                self.saveValue(key: "refreshToken", value: refreshToken)
+                self.createUserDevice(deviceTypeId: self.deviceTypeId)
+               
+                self.createUserDeviceToken(userDeviceId: self.userDeviceId!)
+               
+            }
+        }
+        task.resume()
+    }
+    
+
+    private func createUserDevice(deviceTypeId: String) -> Void{
+        let url = URL(string: "https://services.enabledplay.com/api/Device/userDevices/new/\(deviceTypeId)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(accessToken!)", forHTTPHeaderField: "Authorization")
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print(error)
+                return
+            }
+
+            guard let data = data,
+                  let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                return
+            }
+
+            if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                userDeviceId = json["id"] as? String
+                self.saveValue(key: "userDeviceId", value: userDeviceId!)
+            }
+        }
+        task.resume()
+    }
+    
+    
+    private func createUserDeviceToken(userDeviceId: String) -> Void{
+        let url = URL(string: "https://services.enabledplay.com/api/Device/userDevices/\(userDeviceId)/tokens")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(accessToken!)", forHTTPHeaderField: "Authorization")
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print(error)
+                return
+            }
+
+            guard let data = data,
+                  let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                return
+            }
+
+            if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                deviceToken = json["token"] as? String
+                self.saveValue(key: "deviceToken", value: deviceToken!)
+            }
+        }
+        task.resume()
+    }
+    
+    private func saveValue(key: String, value: String) -> Void{
+        UserDefaults.standard.set(value, forKey: key)
+    }
 }
 
 struct ContentView_Previews: PreviewProvider {
