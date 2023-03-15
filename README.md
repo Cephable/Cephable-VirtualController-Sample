@@ -1,6 +1,6 @@
 # Enabled Play Virtual Controller Sample
 A sample console application that connects to the Enabled Play virtual controller hub for receiving commands and inputs from the Enabled Play app
-There are 2 different examples in this repository: Browser/JavaScript and Console/C#/.NET
+There are 3 different examples in this repository: Browser/JavaScript, Android/Kotlin, and Console/C#/.NET
 
 
 To try these sample out, you'll first need to create an Enabled Play account by downloading the Enabled Play app from https://enabledplay.com/apps
