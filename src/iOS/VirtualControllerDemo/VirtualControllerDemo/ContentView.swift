@@ -95,7 +95,7 @@ struct ContentView: View {
     }
     
     private func updateState() {
-        if accessToken != nil {
+        if accessToken != nil && deviceToken != nil {
             connectionStatus = "Signed In"
         } else {
             connectionStatus = "Signed Out - sign in with your Enabled Play account to register a new virtual controller and get started"
@@ -141,15 +141,13 @@ struct ContentView: View {
             }
             
             if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-               let accessToken = json["access_token"] as? String,
-               let refreshToken = json["refresh_token"] as? String {
-                self.accessToken = accessToken
-                self.refreshToken = refreshToken
-                self.saveValue(key: "accessToken", value: accessToken)
-                self.saveValue(key: "refreshToken", value: refreshToken)
-                self.createUserDevice(deviceTypeId: self.deviceTypeId)
+                let accessToken = json["access_token"] as? String,
+                let refreshToken = json["refresh_token"] as? String {
+               
+                saveValue(key: "accessToken", value: accessToken)
+                saveValue(key: "refreshToken", value: refreshToken)
+                createUserDevice(deviceTypeId: deviceTypeId, accessToken: accessToken)
                 
-                self.createUserDeviceToken(userDeviceId: self.userDeviceId!)
                 
             }
         }
@@ -157,11 +155,11 @@ struct ContentView: View {
     }
     
     
-    private func createUserDevice(deviceTypeId: String) -> Void{
-        let url = URL(string: "https://services.enabledplay.com/api/Device/userDevices/new/\(deviceTypeId)")!
+    private func createUserDevice(deviceTypeId: String, accessToken: String) -> Void{
+        let url = URL(string: "https://services.enabledplay.com/api/Device/userDevices/new/\(deviceTypeId)?name=iOS-Sample")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.setValue("Bearer \(accessToken!)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
@@ -176,19 +174,24 @@ struct ContentView: View {
             }
             
             if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                userDeviceId = json["id"] as? String
+                let userDeviceId = json["id"] as? String
+                self.userDeviceId = userDeviceId
                 self.saveValue(key: "userDeviceId", value: userDeviceId!)
+                
+                
+                createUserDeviceToken(userDeviceId: userDeviceId!, accessToken: accessToken)
             }
         }
         task.resume()
     }
     
     
-    private func createUserDeviceToken(userDeviceId: String) -> Void{
+    private func createUserDeviceToken(userDeviceId: String, accessToken: String) -> Void{
+        
         let url = URL(string: "https://services.enabledplay.com/api/Device/userDevices/\(userDeviceId)/tokens")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.setValue("Bearer \(accessToken!)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
@@ -203,7 +206,8 @@ struct ContentView: View {
             }
             
             if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                deviceToken = json["token"] as? String
+                let deviceToken = json["token"] as? String
+                self.deviceToken = deviceToken
                 self.saveValue(key: "deviceToken", value: deviceToken!)
             }
         }
@@ -211,8 +215,13 @@ struct ContentView: View {
     }
     
     func connect() -> Void {
+        connectionStatus = "Connecting to device hub..."
         // TODO: handle when connected to not try again
         if(deviceToken == nil || deviceToken == ""){
+            if(userDeviceId != nil && userDeviceId!.count > 0) {
+                createUserDeviceToken(userDeviceId: userDeviceId!, accessToken: self.accessToken!)
+            }
+            connectionStatus = "Unable to connect. Try signing out and back in again."
             return
         }
         hubConnection = HubConnectionBuilder(url: URL(string: "https://services.enabledplay.com/device")!)
@@ -233,10 +242,13 @@ struct ContentView: View {
     }
     
     func connectionComplete() {
-        
+        connectionStatus = "Connected"
         hubConnection?.invoke(method: "VerifySelf", invocationDidComplete: {err in
-            print(err)
+            print(err as Any)
         })
+    }
+    func connectionClosed() {
+        connectionStatus = "Connection closed."
     }
     
     private func saveValue(key: String, value: String) -> Void{
@@ -255,10 +267,11 @@ class HubDelegate: HubConnectionDelegate {
     }
     
     func connectionDidFailToOpen(error: Error) {
-        
+        view.connectionClosed()
     }
     
     func connectionDidClose(error: Error?) {
+        view.connectionClosed()
         
     }
     
@@ -268,6 +281,7 @@ class HubDelegate: HubConnectionDelegate {
     
     func connectionDidReconnect() {
         
+            view.connectionComplete()
     }
 }
 

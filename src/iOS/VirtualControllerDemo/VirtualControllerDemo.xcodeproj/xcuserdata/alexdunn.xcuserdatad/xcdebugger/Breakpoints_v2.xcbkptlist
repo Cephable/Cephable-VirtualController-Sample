@@ -14,8 +14,8 @@
             filePath = "VirtualControllerDemo/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "150"
-            endingLineNumber = "150"
+            startingLineNumber = "149"
+            endingLineNumber = "149"
             landmarkName = "exchangeCodeForTokens(code:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -40,7 +40,7 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "E5EBCA4B-6B15-454D-8FA4-D181F96459F2"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "VirtualControllerDemo/ContentView.swift"
@@ -78,8 +78,8 @@
             filePath = "VirtualControllerDemo/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "218"
-            endingLineNumber = "218"
+            startingLineNumber = "227"
+            endingLineNumber = "227"
             landmarkName = "connect()"
             landmarkType = "7">
          </BreakpointContent>
@@ -94,8 +94,8 @@
             filePath = "VirtualControllerDemo/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "254"
-            endingLineNumber = "254"
+            startingLineNumber = "266"
+            endingLineNumber = "266"
             landmarkName = "connectionDidOpen(hubConnection:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -110,13 +110,13 @@
             filePath = "VirtualControllerDemo/ContentView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "237"
-            endingLineNumber = "237"
+            startingLineNumber = "246"
+            endingLineNumber = "246"
             landmarkName = "connectionComplete()"
-            landmarkType = "9">
+            landmarkType = "7">
             <Locations>
                <Location
-                  uuid = "92D97E42-A439-4A13-92CB-3463EB3DC29A - cbe07cc3d3df774b"
+                  uuid = "92D97E42-A439-4A13-92CB-3463EB3DC29A - cbe07cc3d3df7412"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -126,12 +126,12 @@
                   urlString = "file:///Users/alexdunn/Projects/EnabledPlay-VirtualController-Sample/src/iOS/VirtualControllerDemo/VirtualControllerDemo/ContentView.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "237"
-                  endingLineNumber = "237"
-                  offsetFromSymbolStart = "30">
+                  startingLineNumber = "246"
+                  endingLineNumber = "246"
+                  offsetFromSymbolStart = "246">
                </Location>
                <Location
-                  uuid = "92D97E42-A439-4A13-92CB-3463EB3DC29A - e89ba9c704c583ce"
+                  uuid = "92D97E42-A439-4A13-92CB-3463EB3DC29A - e89ba9c704c58111"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -141,8 +141,8 @@
                   urlString = "file:///Users/alexdunn/Projects/EnabledPlay-VirtualController-Sample/src/iOS/VirtualControllerDemo/VirtualControllerDemo/ContentView.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "238"
-                  endingLineNumber = "238"
+                  startingLineNumber = "247"
+                  endingLineNumber = "247"
                   offsetFromSymbolStart = "24">
                </Location>
             </Locations>
@@ -161,6 +161,86 @@
             startingLineNumber = "131"
             endingLineNumber = "131"
             landmarkName = "exchangeCodeForTokens(code:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "7ADDB1D7-FA1A-462B-A2C3-F6BDD22F83C8"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "VirtualControllerDemo/ContentView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "191"
+            endingLineNumber = "191"
+            landmarkName = "createUserDeviceToken(userDeviceId:accessToken:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "21CC3DAB-2676-4800-8623-9F884EB153FF"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "VirtualControllerDemo/ContentView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "144"
+            endingLineNumber = "144"
+            landmarkName = "exchangeCodeForTokens(code:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "21CC3DAB-2676-4800-8623-9F884EB153FF - ae7c90387d370152"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #2 @Sendable (Swift.Optional&lt;Foundation.Data&gt;, Swift.Optional&lt;__C.NSURLResponse&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in VirtualControllerDemo.ContentView.exchangeCodeForTokens(code: Swift.String) -&gt; ()"
+                  moduleName = "VirtualControllerDemo"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/alexdunn/Projects/EnabledPlay-VirtualController-Sample/src/iOS/VirtualControllerDemo/VirtualControllerDemo/ContentView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "144"
+                  endingLineNumber = "144"
+                  offsetFromSymbolStart = "1770">
+               </Location>
+               <Location
+                  uuid = "21CC3DAB-2676-4800-8623-9F884EB153FF - ae7c90387d370152"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #2 @Sendable (Swift.Optional&lt;Foundation.Data&gt;, Swift.Optional&lt;__C.NSURLResponse&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in VirtualControllerDemo.ContentView.exchangeCodeForTokens(code: Swift.String) -&gt; ()"
+                  moduleName = "VirtualControllerDemo"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/alexdunn/Projects/EnabledPlay-VirtualController-Sample/src/iOS/VirtualControllerDemo/VirtualControllerDemo/ContentView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "144"
+                  endingLineNumber = "144"
+                  offsetFromSymbolStart = "2109">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "71FB31AC-DDA9-4002-A5FD-49426CBE01F4"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "VirtualControllerDemo/ContentView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "220"
+            endingLineNumber = "220"
+            landmarkName = "connect()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

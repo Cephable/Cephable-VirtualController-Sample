@@ -207,7 +207,7 @@ class MainActivity : AppCompatActivity() {
 
         val request = Request.Builder()
             .header("Authorization", "Bearer $accessToken")
-            .url("https://services.enabledplay.com/api/Device/userDevices/new/$deviceTypeId")
+            .url("https://services.enabledplay.com/api/Device/userDevices/new/$deviceTypeId?name=Android-Sample")
             .post("".toRequestBody())
             .build()
 
