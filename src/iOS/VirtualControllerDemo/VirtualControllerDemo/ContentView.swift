@@ -10,7 +10,7 @@ import SignalRClient
 
 struct ContentView: View {
     
-    private let clientId = "f64b1a12-5b56-4f9f-b370-fe58557dc5bf"
+    private let clientId = "[your-client-id]"
     private let authRedirectUri = "enabledplay-samples://"
     private let deviceTypeId = "3ae3d1ed-97b7-4572-a57a-00d4724270a0" // Change this to your device type id
     private let state = UUID().uuidString
