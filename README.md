@@ -1,4 +1,4 @@
-# Enabled Play Virtual Controller Sample
+# Enabled Play Virtual Controller Samples
 A sample console application that connects to the Enabled Play virtual controller hub for receiving commands and inputs from the Enabled Play app
 There are 3 different examples in this repository: Browser/JavaScript, Android/Kotlin, and Console/C#/.NET
 
@@ -17,10 +17,18 @@ Once it is connected, it is ready to receive commands. Open the console in the b
 
 ## Get Started - Android / Kotlin
 
-To use the browser example, open the gradle project in Android Studio and ensure you have >= SDK version 31 installed for the Android SDK.
+To use the Android example, open the gradle project in Android Studio and ensure you have >= SDK version 31 installed for the Android SDK.
 In the `MainActivity.kt` you can set your client ID acquired from the Enabled Play team.
 
 Then you can run the app on a local device or emulator. Simply tap the "Sign In" button, sign in with your Enabled Play account and the app will generate an Enabled Play Virtual Controller in your app and wait for commands. You can then run both this app and the Enabled Play app at the same time on any Android device. Use Enabled Play expression controls or hotkeys to send commands and see the latest received command appear in the sample app. You can also a secondary device with the Enabled Play app to send commands to your app.
+
+
+## Get Started - iOS / Swift
+
+To use the iOS example, open the project in the latest version XCode .
+In the `ContentView.swift` you can set your client ID acquired from the Enabled Play team.
+
+Then you can run the app on a local device or emulator. Simply tap the "Sign In" button, sign in with your Enabled Play account and the app will generate an Enabled Play Virtual Controller in your app and wait for commands. You can then run both this app and the Enabled Play app at the same time on any iOS device or across devices. Use Enabled Play expression controls or hotkeys to send commands and see the latest received command appear in the sample app. You can also a secondary device with the Enabled Play app to send commands to your app.
 
 ## Get Started - C# / .NET
 
