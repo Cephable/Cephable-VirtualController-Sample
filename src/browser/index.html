@@ -30,7 +30,7 @@
         }
 
         const createUserDevice = async (deviceTypeId) => {
-            const response = await axios.post(`${apiBaseUrl}api/Device/userDevices/new/${deviceTypeId}`);
+            const response = await axios.post(`${apiBaseUrl}api/Device/userDevices/new/${deviceTypeId}?name=Web-Sample`);
             return response.data;
         };
 

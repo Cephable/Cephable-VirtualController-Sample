@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
         authButton = findViewById(R.id.authButton)
         commandTextView = findViewById(R.id.command)
         authButton!!.setOnClickListener {
-            if(accessToken != null) {
+            if(accessToken?.isNullOrEmpty() == false) {
                 signOut()
                 return@setOnClickListener
             }
@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
 
         loadState()
         updateState()
-        if(deviceToken != null) {
+        if(deviceToken?.isNullOrEmpty() == false) {
             connect()
         }
     }
@@ -61,6 +61,8 @@ class MainActivity : AppCompatActivity() {
         saveValue("refreshToken", "")
         saveValue("userDeviceId", "")
         saveValue("deviceToken", "")
+
+        updateState()
     }
     fun signIn() {val authUri = Uri.parse("https://services.enabledplay.com/signin")
         .buildUpon()
@@ -88,7 +90,7 @@ class MainActivity : AppCompatActivity() {
         }
         loadState()
         updateState()
-        if(deviceToken != null) {
+        if(deviceToken?.isNullOrEmpty() == false) {
             connect()
         }
     }
@@ -110,7 +112,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateState() {
 
-        if(accessToken != null) {
+        if(accessToken?.isNullOrEmpty() == false) {
             authButton?.text = "Sign Out"
         } else {
             authButton?.text = "Sign In"
@@ -193,7 +195,7 @@ class MainActivity : AppCompatActivity() {
         updateState()
 
     }
-    fun saveValue(key: String, value: String) {
+    fun saveValue(key: String, value: String?) {
         val sharedPref = this.getPreferences(MODE_PRIVATE) ?: return
         with (sharedPref.edit()) {
             putString(key, value)
@@ -205,7 +207,7 @@ class MainActivity : AppCompatActivity() {
 
         val request = Request.Builder()
             .header("Authorization", "Bearer $accessToken")
-            .url("https://services.enabledplay.com/api/Device/userDevices/new/$deviceTypeId")
+            .url("https://services.enabledplay.com/api/Device/userDevices/new/$deviceTypeId?name=Android-Sample")
             .post("".toRequestBody())
             .build()
 
