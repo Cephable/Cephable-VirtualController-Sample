@@ -20,6 +20,8 @@ connection.On<string>("DeviceCommand", (command) =>
 
 await connection.StartAsync();
 
+await connection.SendAsync("VerifySelf");
+
 Console.WriteLine("Connected to hub. Waiting for commands... ");
 Console.WriteLine("Press enter to exit.");
 Console.ReadLine();
