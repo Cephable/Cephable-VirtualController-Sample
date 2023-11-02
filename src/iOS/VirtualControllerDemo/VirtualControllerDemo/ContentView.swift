@@ -73,7 +73,7 @@ struct ContentView: View {
     }
     
     func signIn() {
-        let authUri = URL(string: "https://services.enabledplay.com/signin")!
+        let authUri = URL(string: "https://services.cephable.com/signin")!
             .appending(queryItems:[
                 URLQueryItem(name:"client_id", value: clientId),
                 URLQueryItem(name:"state",value: state),
@@ -98,18 +98,18 @@ struct ContentView: View {
         if accessToken != nil && deviceToken != nil {
             connectionStatus = "Signed In"
         } else {
-            connectionStatus = "Signed Out - sign in with your Enabled Play account to register a new virtual controller and get started"
+            connectionStatus = "Signed Out - sign in with your Cephable account to register a new virtual controller and get started"
         }
         //
         //        if hubConnection?.state == .connected {
-        //            connectionStatus = "Connected and Ready for Commands. Use the Enabled Play app to start sending commands with virtual buttons or expression controls"
+        //            connectionStatus = "Connected and Ready for Commands. Use the Cephable app to start sending commands with virtual buttons or expression controls"
         //        } else {
         //            connectionStatus = "Disconnected. Try restarting the app or signing out to try again"
         //        }
     }
     
     private func exchangeCodeForTokens(code: String) {
-        let url = URL(string: "https://services.enabledplay.com/signin/token")!
+        let url = URL(string: "https://services.cephable.com/signin/token")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
@@ -156,7 +156,7 @@ struct ContentView: View {
     
     
     private func createUserDevice(deviceTypeId: String, accessToken: String) -> Void{
-        let url = URL(string: "https://services.enabledplay.com/api/Device/userDevices/new/\(deviceTypeId)?name=iOS-Sample")!
+        let url = URL(string: "https://services.cephable.com/api/Device/userDevices/new/\(deviceTypeId)?name=iOS-Sample")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
@@ -188,7 +188,7 @@ struct ContentView: View {
     
     private func createUserDeviceToken(userDeviceId: String, accessToken: String) -> Void{
         
-        let url = URL(string: "https://services.enabledplay.com/api/Device/userDevices/\(userDeviceId)/tokens")!
+        let url = URL(string: "https://services.cephable.com/api/Device/userDevices/\(userDeviceId)/tokens")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
@@ -224,7 +224,7 @@ struct ContentView: View {
             connectionStatus = "Unable to connect. Try signing out and back in again."
             return
         }
-        hubConnection = HubConnectionBuilder(url: URL(string: "https://services.enabledplay.com/device")!)
+        hubConnection = HubConnectionBuilder(url: URL(string: "https://services.cephable.com/device")!)
             .withAutoReconnect().withHttpConnectionOptions(configureHttpOptions: { (options: HttpConnectionOptions) in
                 options.headers = ["X-DEVICE-TOKEN": deviceToken!]
                 options.accessTokenProvider = { return deviceToken! }

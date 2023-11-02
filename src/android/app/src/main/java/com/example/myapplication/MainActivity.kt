@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
 
         updateState()
     }
-    fun signIn() {val authUri = Uri.parse("https://services.enabledplay.com/signin")
+    fun signIn() {val authUri = Uri.parse("https://services.cephable.com/signin")
         .buildUpon()
         .appendQueryParameter("client_id", clientId)
         .appendQueryParameter("state", state)
@@ -118,7 +118,7 @@ class MainActivity : AppCompatActivity() {
             authButton?.text = "Sign In"
         }
         if(hubConnection?.connectionState == HubConnectionState.CONNECTED) {
-            textView?.text = "Connected and Ready for Commands. Use the Enabled Play app to start sending commands with virtual buttons or expression controls"
+            textView?.text = "Connected and Ready for Commands. Use the Cephable app to start sending commands with virtual buttons or expression controls"
         }
         else {
             textView?.text = "Disconnected. Try restarting the app or signing out to try again"
@@ -138,7 +138,7 @@ class MainActivity : AppCompatActivity() {
             .build()
 
         val request = Request.Builder()
-            .url("https://services.enabledplay.com/signin/token")
+            .url("https://services.cephable.com/signin/token")
             .post(body)
             .build()
 
@@ -179,7 +179,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
         // connect to signalr hub
-        hubConnection = HubConnectionBuilder.create("https://services.enabledplay.com/device")
+        hubConnection = HubConnectionBuilder.create("https://services.cephable.com/device")
             .withHeader("X-Device-Token", deviceToken)
             .withAccessTokenProvider(Single.defer { Single.just(accessToken!!) })
             .build()
@@ -207,7 +207,7 @@ class MainActivity : AppCompatActivity() {
 
         val request = Request.Builder()
             .header("Authorization", "Bearer $accessToken")
-            .url("https://services.enabledplay.com/api/Device/userDevices/new/$deviceTypeId?name=Android-Sample")
+            .url("https://services.cephable.com/api/Device/userDevices/new/$deviceTypeId?name=Android-Sample")
             .post("".toRequestBody())
             .build()
 
@@ -218,7 +218,7 @@ class MainActivity : AppCompatActivity() {
     fun createUserDeviceToken(userDeviceId: String): String {
         val request = Request.Builder()
             .header("Authorization", "Bearer $accessToken")
-            .url("https://services.enabledplay.com/api/Device/userDevices/$userDeviceId/tokens")
+            .url("https://services.cephable.com/api/Device/userDevices/$userDeviceId/tokens")
             .post("".toRequestBody())
             .build()
 
