@@ -37,6 +37,16 @@ You can then use the Cephable API at https://services.cephable.com/swagger to ge
 
 When you add a valid token in the sample, it will connect to the virtual controller hub and allow you to send commands from the Cephable app via face expressions, gestures, virtual buttons, and more.
 
+## Get Started - C++
+
+The C++ demo is an end-to-end example that authenticates a Cephable user using the browser by creating a localhost callback listener for the auth code to exchange for an access token. It then registers a new user device for the authenticated user and connects to the device hub to receive commands and prints them.
+
+You'll need to install the dependencies using your preferred package installer (we recommend Microsoft's `vcpkg`):
+- `cpprest` for handling auth server: https://github.com/microsoft/cpprestsdk
+- `signalr` for connecting to Cephable device hub over websocket: https://github.com/aspnet/SignalR-Client-Cpp 
+
+You'll also need to create a project in the cephable developer portal at https://portal.cephable.com and bring over the auth client ID and Device Type ID.
+
 ## Other Features
 
 The virtual controller hub can do more than just receive commands, you can also subscribe to other events including:
