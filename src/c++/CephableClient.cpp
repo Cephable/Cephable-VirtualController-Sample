@@ -51,8 +51,7 @@ std::string authenticateWithBrowser(const std::string& apiUrl) {
     builder.append_query("grant_type", "authorization_code");
     builder.append_query("code", authCode);
     builder.append_query("redirect_uri", "http://localhost:8080/callback");
-    builder.append_query("client_id", "your_client_id");
-    builder.append_query("client_secret", "your_client_secret");
+    builder.append_query("client_id", "[paste your auth client ID here]");
 
     http_request tokenRequest(methods::POST);
     tokenRequest.headers().add(U("Content-Type"), U("application/x-www-form-urlencoded"));
@@ -128,7 +127,6 @@ void connectToSignalRWithDeviceToken(const std::string& signalRUrl, const std::s
 int main() {
     const std::string apiUrl = "https://services.cephable.com";
     const std::string deviceTypeId = "[paste your device type ID here]";
-    const std::string authClientId = "[paste your auth client ID here]";
     try {
         std::string bearerToken = authenticateWithBrowser(apiUrl, authClientId);
         std::cout << "Bearer token: " << bearerToken << std::endl;
