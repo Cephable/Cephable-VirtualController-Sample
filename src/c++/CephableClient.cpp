@@ -7,6 +7,10 @@
 #include <cpprest/uri.h>
 #include <cpprest/json.h>
 
+#include "signalrclient/hub_connection.h"
+#include "signalrclient/hub_connection_builder.h"
+#include "signalrclient/signalr_value.h"
+
 using namespace web;
 using namespace web::http;
 using namespace web::http::client;
