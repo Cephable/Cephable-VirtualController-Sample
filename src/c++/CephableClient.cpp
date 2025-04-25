@@ -36,7 +36,7 @@ std::string authenticateWithBrowser(const std::string& apiUrl) {
     listener.open().wait();
 
     // Open the browser for user authentication
-    std::string authUrl = apiUrl + "/signin?grant_type=code&client_id=your_client_id&redirect_uri=http://localhost:8080/callback";
+    std::string authUrl = apiUrl + "/signin?client_id=your_client_id&redirect_uri=http://localhost:8080/callback";
     std::string command = "open " + authUrl;
     std::system(command.c_str());
 
@@ -47,8 +47,8 @@ std::string authenticateWithBrowser(const std::string& apiUrl) {
 
     // Exchange the auth code for a bearer token
     http_client client(apiUrl);
-    uri_builder builder("/token");
-    builder.append_query("grant_type", "authorization_code");
+    uri_builder builder("/signin/token");
+    builder.append_query("grant_type", "code");
     builder.append_query("code", authCode);
     builder.append_query("redirect_uri", "http://localhost:8080/callback");
     builder.append_query("client_id", "[paste your auth client ID here]");
