@@ -65,7 +65,7 @@
 
         connection.on("DeviceCommand", function (command, macro) {
           console.log("Received command: " + command);
-          console.log("Received macro: " + macro);
+          console.log("Received macro: " + JSON.stringify(macro));
           console.log("Current device: " + JSON.stringify(currentDevice));
 
           const commandsList = document.getElementById("commands");
