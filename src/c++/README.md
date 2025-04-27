@@ -17,3 +17,46 @@ This sample is meant to demonstrate the steps needed to implement a virtual cont
 2. Use the Cephable API (https://services.cephable.com/swagger) to register a user device and a token for this device. A Cephable `UserDevice` represents a connection that Cephable can send commands and actions to. 
 
 3. Use the new `UserDevice`'s `token` to authenticate the virtual device to the Signalr Hub (Cephable Device Hub). SignalR uses `websockets` to maintain connections and receive commands. The primary command we show here is the `DeviceCommand` which receives 2 arguments - the command that was sent and the macro it is currently mapped to in the `UserDevice` `CurrentProfile` configuration.
+Here's an example of the full json body received from the websocket for `DeviceCommand`:
+
+```json
+{
+    "type": 1,
+    "target": "DeviceCommand",
+    "arguments": [
+        "Move Forward",
+        {
+            "id": "2c13dc42-6e06-4e03-a780-798cb86cef1a",
+            "name": "Move Forward",
+            "commands": [
+                "move forward",
+                "go forward",
+                "head_tilt_forward"
+            ],
+            "events": [
+                {
+                    "eventType": "KeyPress",
+                    "keys": [
+                        "w"
+                    ],
+                    "holdTimeMilliseconds": 0,
+                    "isKeyLatch": false,
+                    "typedPhrase": null,
+                    "mouseMoveX": null,
+                    "mouseMoveY": null,
+                    "mouseMoveScroll": null,
+                    "joystickLeftMoveX": null,
+                    "joystickLeftMoveY": null,
+                    "joystickRightMoveX": null,
+                    "joystickRightMoveY": null,
+                    "outputSpeech": null,
+                    "audioFileUrl": null,
+                    "deviceTypeCustomActionId": null,
+                    "deviceTypeId": null,
+                    "additionalInputContent": null
+                }
+            ]
+        }
+    ]
+}
+```
