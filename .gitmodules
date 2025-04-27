@@ -1,0 +1,6 @@
+[submodule "src/c++/submodules/SignalR-Client-Cpp"]
+	path = src/c++/submodules/SignalR-Client-Cpp
+	url = https://github.com/aspnet/SignalR-Client-Cpp.git
+[submodule "src/c++/submodules/cpprestsdk"]
+	path = src/c++/submodules/cpprestsdk
+	url = https://github.com/microsoft/cpprestsdk.git

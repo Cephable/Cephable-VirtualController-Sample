@@ -16,7 +16,7 @@ using namespace web::http;
 using namespace web::http::client;
 using namespace web::http::experimental::listener;
 
-std::string authenticateWithBrowser(const std::string& apiUrl) {
+std::string authenticateWithBrowser(const std::string& apiUrl, const std::string& authClientId) {
     std::string authCode;
     std::promise<std::string> authCodePromise;
     auto authCodeFuture = authCodePromise.get_future();
@@ -36,7 +36,7 @@ std::string authenticateWithBrowser(const std::string& apiUrl) {
     listener.open().wait();
 
     // Open the browser for user authentication
-    std::string authUrl = apiUrl + "/signin?client_id=your_client_id&redirect_uri=http://localhost:8080/callback";
+    std::string authUrl = apiUrl + "/signin?client_id=" + authClientId + "&redirect_uri=http://localhost:8080/callback";
     std::string command = "open " + authUrl;
     std::system(command.c_str());
 
@@ -51,7 +51,7 @@ std::string authenticateWithBrowser(const std::string& apiUrl) {
     builder.append_query("grant_type", "code");
     builder.append_query("code", authCode);
     builder.append_query("redirect_uri", "http://localhost:8080/callback");
-    builder.append_query("client_id", "[paste your auth client ID here]");
+    builder.append_query("client_id", authClientId);
 
     http_request tokenRequest(methods::POST);
     tokenRequest.headers().add(U("Content-Type"), U("application/x-www-form-urlencoded"));
@@ -127,6 +127,7 @@ void connectToSignalRWithDeviceToken(const std::string& signalRUrl, const std::s
 int main() {
     const std::string apiUrl = "https://services.cephable.com";
     const std::string deviceTypeId = "[paste your device type ID here]";
+    const std::string authClientId = "[paste your auth client ID here]";
     try {
         std::string bearerToken = authenticateWithBrowser(apiUrl, authClientId);
         std::cout << "Bearer token: " << bearerToken << std::endl;
