@@ -62,8 +62,9 @@
           .withAutomaticReconnect()
           .build();
 
-        connection.on("DeviceCommand", function (command) {
+        connection.on("DeviceCommand", function (command, macro) {
           console.log("Received command: " + command);
+          console.log("Received macro: " + macro);
 
           const commandsList = document.getElementById("commands");
           const li = document.createElement("li");
