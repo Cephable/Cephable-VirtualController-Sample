@@ -13,6 +13,7 @@
       let deviceToken = null;
       let accessToken = null;
       let clientId = null;
+      let currentDevice = null;
       const signIn = async () => {
         clientId = document.getElementById("client_id_field").value;
         if (!clientId) {
@@ -65,6 +66,7 @@
         connection.on("DeviceCommand", function (command, macro) {
           console.log("Received command: " + command);
           console.log("Received macro: " + macro);
+          console.log("Current device: " + JSON.stringify(currentDevice));
 
           const commandsList = document.getElementById("commands");
           const li = document.createElement("li");
@@ -76,7 +78,7 @@
           .start({ withCredentials: false })
           .then(async function () {
             console.log("Connected to hub. Waiting for commands...");
-            await connection.invoke("VerifySelf");
+            currentDevice = await connection.invoke("VerifySelf");
           })
           .catch(function (err) {
             return console.error(err.toString());
@@ -122,7 +124,7 @@
         ] = `Bearer ${accessToken}`;
         localStorage.setItem("accessToken", accessToken);
 
-        const deviceTypeId = "[Your user device type id]"; // Change this to your device type id
+        const deviceTypeId = "49c60e4e-2543-4c04-9332-f51e5678465f"; // Change this to your device type id
         const userDevice = await createUserDevice(deviceTypeId);
         localStorage.setItem("device", JSON.stringify(userDevice));
         deviceToken = await createUserDeviceToken(userDevice.id);
