@@ -106,19 +106,30 @@ std::string createDeviceWithBearerToken(const std::string& apiUrl, const std::st
 void connectToSignalRWithDeviceToken(const std::string& signalRUrl, const std::string& deviceToken) {
     auto connection = signalr::hub_connection_builder::create(signalRUrl).build();
 
-    connection.on("ReceiveCommand", [](const signalr::value& message) {
+    connection.on("DeviceCommand", [](const signalr::value& message) {
         std::cout << "Received command: " << message.as_string() << std::endl;
     });
 
-    connection.start().then([&connection, &deviceToken]() {
-        connection.invoke("Authenticate", deviceToken).then([]() {
-            std::cout << "Authenticated with SignalR hub." << std::endl;
-        }).catch_error([](const std::exception& e) {
-            std::cerr << "Error authenticating: " << e.what() << std::endl;
-        });
-    }).catch_error([](const std::exception& e) {
-        std::cerr << "Error starting connection: " << e.what() << std::endl;
+
+    std::promise<void> startTask;
+    connection.start([&connection, &startTask](std::exception_ptr exception)
+    {
+        if (exception)
+        {
+            try
+            {
+                std::rethrow_exception(exception);
+            }
+            catch (const std::exception & ex)
+            {
+                std::cout << "exception when starting connection: " << ex.what() << std::endl;
+            }
+        }
+        startTask.set_value();
     });
+    
+
+    startTask.get_future().get();
 
     // Keep the connection alive
     std::this_thread::sleep_for(std::chrono::minutes(10));

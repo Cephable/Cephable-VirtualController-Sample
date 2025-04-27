@@ -9,7 +9,7 @@
     ></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-      const apiBaseUrl = "https://services.cephable.com/";
+      const apiBaseUrl = "https://services.cephable.com/"; 
       let deviceToken = null;
       let accessToken = null;
       let clientId = null;
@@ -21,7 +21,7 @@
         }
         localStorage.setItem("clientId", clientId);
         const redirectUri = window.location.origin + window.location.pathname;
-        const authUrl = `https://services.cephable.com/signin?redirect_uri=${encodeURIComponent(
+        const authUrl = `${apiBaseUrl}signin?redirect_uri=${encodeURIComponent(
           redirectUri
         )}&client_id=${clientId}`;
         window.location.href = authUrl;
@@ -30,7 +30,7 @@
       const getAccessToken = async (code) => {
         const redirectUri = window.location.origin + window.location.pathname;
         const response = await axios.post(
-          `${apiBaseUrl}signin/token?client_id=${clientId}&code=${code}&redirect_uri=${encodeURI(
+          `${apiBaseUrl}signin/token?client_id=${clientId}&code=${encodeURIComponent(code)}&redirect_uri=${encodeURIComponent(
             redirectUri
           )}&grant_type=code`
         );
@@ -53,7 +53,7 @@
 
       const startSignalRConnection = async () => {
         const connection = new signalR.HubConnectionBuilder()
-          .withUrl("https://services.cephable.com/device", {
+          .withUrl(`${apiBaseUrl}device`, {
             accessTokenFactory: () => deviceToken,
             headers: {
               "X-Device-Token": deviceToken,
@@ -121,7 +121,7 @@
         ] = `Bearer ${accessToken}`;
         localStorage.setItem("accessToken", accessToken);
 
-        const deviceTypeId = "3ae3d1ed-97b7-4572-a57a-00d4724270a0"; // Change this to your device type id
+        const deviceTypeId = "[Your user device type id]"; // Change this to your device type id
         const userDevice = await createUserDevice(deviceTypeId);
         localStorage.setItem("device", JSON.stringify(userDevice));
         deviceToken = await createUserDeviceToken(userDevice.id);
