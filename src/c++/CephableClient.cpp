@@ -131,6 +131,13 @@ void connectToSignalRWithDeviceToken(const std::string& signalRUrl, const std::s
 
     startTask.get_future().get();
 
+    std::promise<void> send_task;
+    connection.invoke("VerifySelf", [&send_task](const signalr::value& value, std::exception_ptr exception) {
+        send_task.set_value();
+    });
+    
+    send_task.get_future().get();
+
     // Keep the connection alive
     std::this_thread::sleep_for(std::chrono::minutes(10));
 }
