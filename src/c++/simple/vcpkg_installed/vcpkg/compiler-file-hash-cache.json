@@ -1,0 +1,14 @@
+{
+  "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++" : 
+  {
+    "hash" : "cc16b34a01e30ff98ab64e63ae5f7a8499f9383b",
+    "size" : 257149376,
+    "timestamp" : 1733555725
+  },
+  "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc" : 
+  {
+    "hash" : "cc16b34a01e30ff98ab64e63ae5f7a8499f9383b",
+    "size" : 257149376,
+    "timestamp" : 1733555725
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "dependencies": [
+    "cpprestsdk",
+    "uwebsockets",
+    "nlohmann-json"
+  ]
+}

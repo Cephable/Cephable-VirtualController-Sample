@@ -165,4 +165,4 @@ wss://enabled-prod.service.signalr.net/client/?hub=devicehub&asrs.op=%2Fdevice&n
 }
 ```
 
-A great way to see these steps in action is to run the `browser` demo and monitor the Network tab in Chrome Dev tools to see the different steps and events executed.
+A great way to see these steps in action is to run the `browser` demo and monitor the Network tab in Chrome Dev tools to see the different steps and events executed.`
