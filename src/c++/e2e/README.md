@@ -78,7 +78,7 @@ Here you will receive the json body payload with more information on how to conn
 }
 ```
 
-2. Make a POST request to the `url` property from the response but this time, change the `Authorization` HTTP header to the new access token value from the first response. Be sure to also send the `X-Device-Token` header as well but wit the original device token value.
+2. Make a POST request to the `url` (with an appended /client/negotiate route) property from the response but this time, change the `Authorization` HTTP header to the new access token value from the first response. Be sure to also send the `X-Device-Token` header as well but with the original device token value.
 You'll receive a JSON response body with a connection ID and token as well as information about the transport types it can use such as websockets. Ex:
 ```json
 {

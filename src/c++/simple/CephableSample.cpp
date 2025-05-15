@@ -27,7 +27,16 @@ void negotiate_and_connect(const std::string& deviceToken) {
         }
 
         auto jsonBody = response.extract_json().get();
-        std::string url = jsonBody[U("url")].as_string();
+        std::string baseUrl = jsonBody[U("url")].as_string();
+        // Extract the host and query part from the URL
+        size_t hostEnd = baseUrl.find('/', 8); // Skip https://
+        size_t queryStart = baseUrl.find('?');
+        
+        std::string host = (hostEnd != std::string::npos) ? baseUrl.substr(0, hostEnd) : baseUrl;
+        std::string query = (queryStart != std::string::npos) ? baseUrl.substr(queryStart) : "";
+        
+        // Construct the new URL with /client/negotiate
+        std::string url = host + "/client/negotiate" + query;
         std::string accessToken = jsonBody[U("accessToken")].as_string();
 
         // Step 2: Authenticate to the hub
@@ -47,7 +56,7 @@ void negotiate_and_connect(const std::string& deviceToken) {
         std::string connectionToken = hubJsonBody[U("connectionToken")].as_string();
 
         // Step 3: Connect via WebSocket using uWebSockets
-        std::string wsUrl = url.replace(0, 4, "wss") + "&id=" + connectionToken + "&access_token=" + accessToken;
+        std::string wsUrl = baseUrl.replace(0, 4, "wss") + "&id=" + connectionToken + "&access_token=" + accessToken;
 
         uWS::App()
             .ws("/*", {
