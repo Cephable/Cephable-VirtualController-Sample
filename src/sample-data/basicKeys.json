@@ -1,3 +1,31 @@
-[{
-    
-}]
+{
+    "description": "Press space bar and release immediately",
+    "steps": [
+        {
+        "id": "1",
+        "name": "Space",
+        "commands": ["space"],
+        "events": [
+            {
+                "eventType": "KeyPress",
+                "keys": ["space"],
+                "holdTimeMilliseconds": 0,
+                "isKeyLatch": false,
+                "typedPhrase": null,
+                "mouseMoveX": null,
+                "mouseMoveY": null,
+                "mouseMoveScroll": null,
+                "joystickLeftMoveX": null,
+                "joystickLeftMoveY": null,
+                "joystickRightMoveX": null,
+                "joystickRightMoveY": null,
+                "outputSpeech": null,
+                "audioFileUrl": null,
+                "deviceTypeCustomActionId": null,
+                "deviceTypeId": null,
+                "additionalInputContent": null
+            }
+        ]
+    }
+    ]
+}

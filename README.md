@@ -64,3 +64,66 @@ You can also send events over the hub to get the latest configuration informatio
 - `connection.SendAsync("DeviceStoppedListening")`
 
 Checkout the tutorials at https://cephable.com/tutorials for how to use the Cephable app to build profiles and send commands
+
+
+## Data Types
+
+For available keys and buttons that could be in any `keys` array, see the `/sample-data/key_and_button_values.json`
+
+The possible macro event types include:
+
+```json
+[
+    "KeyPress",
+    "Pause",
+    "Type",
+    "MouseMove",
+    "JoysticksMove",
+    "PlayAudio",
+    "KeyRelease",
+    "StopOutputs",
+    "KeyToggle",
+    "DeviceTypeCustomAction"
+]
+```
+
+Each macro can contain a list of events of these types as well as the commands that could have executed them when you receive the `DeviceCommand` event. For example:
+
+```json
+ {
+    "id": "2c13dc42-6e06-4e03-a780-798cb86cef1a",
+    "name": "Move Forward",
+    "commands": [
+        "move forward",
+        "go forward",
+        "head_tilt_forward"
+    ],
+    "events": [
+        {
+            "eventType": "KeyPress",
+            "keys": [
+                "w"
+            ],
+            "holdTimeMilliseconds": 0,
+            "isKeyLatch": false,
+            "typedPhrase": null,
+            "mouseMoveX": null,
+            "mouseMoveY": null,
+            "mouseMoveScroll": null,
+            "joystickLeftMoveX": null,
+            "joystickLeftMoveY": null,
+            "joystickRightMoveX": null,
+            "joystickRightMoveY": null,
+            "outputSpeech": null,
+            "audioFileUrl": null,
+            "deviceTypeCustomActionId": null,
+            "deviceTypeId": null,
+            "additionalInputContent": null
+        }
+    ]
+}
+```
+
+Your virtual controller should receive these events/commands and macros and execute them. You will need to keep track of the current state of held keys and buttons as well as automatically release keys when a `holdTimeMilliseconds` value is present and that time has passed since the hold started.
+
+For a list of sample events and macros check out the `/sample-data` folder for test data and descriptions of what they are.

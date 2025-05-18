@@ -1,0 +1,90 @@
+{
+    "description": "in a first person shooter game with mouse and keyboard, hold down running forward, then after 2 seconds, aim and shoot, then stop aiming and shooting, throw a grenade, then stop running",
+    "steps": [
+        {
+            "id": "1",
+            "name": "Start Running Forward",
+            "commands": [
+                "run forward"
+            ],
+            "events": [
+                {
+                    "eventType": "KeyToggle",
+                    "keys": [
+                        "w"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "2",
+            "name": "Aim and Shoot",
+            "commands": [
+                "aim",
+                "shoot"
+            ],
+            "events": [
+                {
+                    "eventType": "KeyToggle",
+                    "keys": [
+                        "mouse_button_2"
+                    ]
+                },
+                {
+                    "eventType": "KeyPress",
+                    "keys": [
+                        "mouse_button_1"
+                    ],
+                    "holdTimeMilliseconds": 0
+                }
+            ]
+        },
+        {
+            "id": "3",
+            "name": "Stop Aiming and Shooting",
+            "commands": [
+                "stop aim",
+                "stop shoot"
+            ],
+            "events": [
+                {
+                    "eventType": "KeyToggle",
+                    "keys": [
+                        "mouse_button_2"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "4",
+            "name": "Throw Grenade",
+            "commands": [
+                "throw grenade"
+            ],
+            "events": [
+                {
+                    "eventType": "KeyPress",
+                    "keys": [
+                        "g"
+                    ],
+                    "holdTimeMilliseconds": 0
+                }
+            ]
+        },
+        {
+            "id": "5",
+            "name": "Stop Running",
+            "commands": [
+                "stop run"
+            ],
+            "events": [
+                {
+                    "eventType": "KeyRelease",
+                    "keys": [
+                        "w"
+                    ]
+                }
+            ]
+        }
+    ]
+}

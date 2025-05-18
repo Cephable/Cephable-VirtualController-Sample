@@ -1,0 +1,87 @@
+{
+    "description": "Running for 2 seconds, then jumping, then keep running for another second, then aim and shoot and turn around",
+    "steps": [
+    {
+        "id": "1",
+        "name": "Start Running Forward",
+        "commands": ["run forward"],
+        "events": [
+            {
+                "eventType": "JoystickMove",
+                "joystickLeftMoveY": 100
+            }
+        ]
+    },
+    {
+        "id": "2",
+        "name": "Pause for Running Duration",
+        "commands": [],
+        "events": [
+            {
+                "eventType": "Pause",
+                "holdTimeMilliseconds": 2000
+            }
+        ]
+    },
+    {
+        "id": "3",
+        "name": "Jump",
+        "commands": ["jump"],
+        "events": [
+            {
+                "eventType": "KeyPress",
+                "keys": ["gamepad_button_1"]
+            }
+        ]
+    },
+    {
+        "id": "4",
+        "name": "Keep Running Forward",
+        "commands": ["continue running"],
+        "events": [
+            {
+                "eventType": "Pause",
+                "holdTimeMilliseconds": 1000
+            }
+        ]
+    },
+    {
+        "id": "5",
+        "name": "Aim and Shoot",
+        "commands": ["aim", "shoot"],
+        "events": [
+            {
+                "eventType": "KeyToggle",
+                "keys": ["gamepad_button_2"]
+            },
+            {
+                "eventType": "KeyPress",
+                "keys": ["gamepad_button_3"]
+            }
+        ]
+    },
+    {
+        "id": "6",
+        "name": "Turn Around",
+        "commands": ["turn around"],
+        "events": [
+            {
+                "eventType": "JoystickMove",
+                "joystickLeftMoveX": -100
+            }
+        ]
+    },
+    {
+        "id": "7",
+        "name": "Stop Running",
+        "commands": ["stop run"],
+        "events": [
+            {
+                "eventType": "JoystickMove",
+                "joystickLeftMoveY": 0
+            }
+        ]
+    }
+]
+
+}

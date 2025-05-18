@@ -1,0 +1,39 @@
+{
+    "description": "running forward for 5 seconds and stopping",
+    "steps": [
+    {
+        "id": "1",
+        "name": "Start Running Forward",
+        "commands": ["run forward"],
+        "events": [
+            {
+                "eventType": "JoystickMove",
+                "joystickLeftMoveY": 100
+            }
+        ]
+    },
+    {
+        "id": "2",
+        "name": "Pause for Running Duration",
+        "commands": [],
+        "events": [
+            {
+                "eventType": "Pause",
+                "holdTimeMilliseconds": 5000
+            }
+        ]
+    },
+    {
+        "id": "3",
+        "name": "Stop Running",
+        "commands": ["stop run"],
+        "events": [
+            {
+                "eventType": "JoystickMove",
+                "joystickLeftMoveY": 0
+            }
+        ]
+    }
+]
+
+}
