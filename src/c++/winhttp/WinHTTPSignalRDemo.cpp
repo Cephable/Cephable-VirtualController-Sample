@@ -4,29 +4,81 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cctype>
+#include <iomanip>
+#include <sstream>
+#include <random>
 
 #pragma comment(lib, "winhttp.lib")
 
-std::wstring ConvertToWide(const std::string& str) {
+std::wstring ConvertToWide(const std::string &str)
+{
     return std::wstring(str.begin(), str.end());
 }
 
-std::string ConvertToNarrow(const std::wstring& wstr) {
+std::string ConvertToNarrow(const std::wstring &wstr)
+{
     return std::string(wstr.begin(), wstr.end());
 }
+std::string generateRandomBase64String(size_t length) {
+    const std::string base64_chars = 
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz"
+        "0123456789+/";
+    
+    std::random_device rd;  // Seed for random number generator
+    std::mt19937 gen(rd()); // Mersenne Twister RNG
+    std::uniform_int_distribution<> dis(0, base64_chars.size() - 1);
 
-std::string HttpGet(const std::wstring& host, const std::wstring& path, const std::wstring& deviceToken, INTERNET_PORT port = INTERNET_DEFAULT_HTTPS_PORT) {
+    std::string random_base64;
+    random_base64.reserve(length);
+
+    for (size_t i = 0; i < length; ++i) {
+        random_base64 += base64_chars[dis(gen)];
+    }
+
+    return random_base64;
+}
+std::string UrlEncode(const std::string &value)
+{
+    std::ostringstream escaped;
+    escaped.fill('0');
+    escaped << std::hex;
+
+    for (std::string::const_iterator i = value.begin(), n = value.end(); i != n; ++i)
+    {
+        std::string::value_type c = (*i);
+
+        // Keep alphanumeric and other accepted characters intact
+        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~')
+        {
+            escaped << c;
+            continue;
+        }
+
+        // Any other characters are percent-encoded
+        escaped << std::uppercase;
+        escaped << '%' << std::setw(2) << int((unsigned char)c);
+        escaped << std::nouppercase;
+    }
+
+    return escaped.str();
+}
+std::string HttpGet(const std::wstring &host, const std::wstring &path, const std::wstring &deviceToken, INTERNET_PORT port = INTERNET_DEFAULT_HTTPS_PORT)
+{
     HINTERNET hSession = WinHttpOpen(L"SignalRClient/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, NULL, NULL, 0);
     HINTERNET hConnect = WinHttpConnect(hSession, host.c_str(), port, 0);
     HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", path.c_str(), NULL, WINHTTP_NO_REFERER,
-        WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+                                            WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
 
     std::wstring headers = L"X-DEVICE-TOKEN: " + deviceToken + L"\r\n";
+    headers += L"Origin: console\r\n";
     WinHttpAddRequestHeaders(hRequest, headers.c_str(), -1, WINHTTP_ADDREQ_FLAG_ADD);
-    
+
     // Log request headers
     std::wcout << L"Request URL: https://" << host << path << std::endl;
-    std::wcout << L"Request Headers:\n" << headers << std::endl;
+    std::wcout << L"Request Headers:\n"
+               << headers << std::endl;
 
     WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0);
     WinHttpReceiveResponse(hRequest, NULL);
@@ -34,29 +86,35 @@ std::string HttpGet(const std::wstring& host, const std::wstring& path, const st
     // Log response headers
     wchar_t buffer[4096];
     DWORD bufferSize = sizeof(buffer);
-    if (WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX, 
-                          buffer, &bufferSize, WINHTTP_NO_HEADER_INDEX)) {
-        std::wcout << L"Response Headers:\n" << buffer << std::endl;
+    if (WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX,
+                            buffer, &bufferSize, WINHTTP_NO_HEADER_INDEX))
+    {
+        std::wcout << L"Response Headers:\n"
+                   << buffer << std::endl;
     }
-    else {
+    else
+    {
         std::wcerr << L"Failed to retrieve response headers. Error: " << GetLastError() << std::endl;
     }
 
     DWORD dwSize = 0;
     std::string response;
-    do {
+    do
+    {
         DWORD dwDownloaded = 0;
         WinHttpQueryDataAvailable(hRequest, &dwSize);
-        if (dwSize == 0) break;
+        if (dwSize == 0)
+            break;
 
         std::vector<char> buffer(dwSize + 1);
         WinHttpReadData(hRequest, buffer.data(), dwSize, &dwDownloaded);
         buffer[dwDownloaded] = 0; // Null-terminate for safe printing
         response.append(buffer.data(), dwDownloaded);
     } while (dwSize > 0);
-    
+
     // Log response body
-    std::cout << "Response Body:\n" << response << std::endl;
+    std::cout << "Response Body:\n"
+              << response << std::endl;
 
     WinHttpCloseHandle(hRequest);
     WinHttpCloseHandle(hConnect);
@@ -65,8 +123,9 @@ std::string HttpGet(const std::wstring& host, const std::wstring& path, const st
     return response;
 }
 
-std::string HttpPost(const std::wstring& url, const std::wstring& deviceToken, const std::wstring& accessToken) {
-    URL_COMPONENTS urlComp = { sizeof(urlComp) };
+std::string HttpPost(const std::wstring &url, const std::wstring &deviceToken, const std::wstring &accessToken)
+{
+    URL_COMPONENTS urlComp = {sizeof(urlComp)};
     wchar_t hostName[256], urlPath[1024];
     urlComp.lpszHostName = hostName;
     urlComp.dwHostNameLength = _countof(hostName);
@@ -77,24 +136,27 @@ std::string HttpPost(const std::wstring& url, const std::wstring& deviceToken, c
     HINTERNET hSession = WinHttpOpen(L"SignalRClient/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, NULL, NULL, 0);
     HINTERNET hConnect = WinHttpConnect(hSession, urlComp.lpszHostName, urlComp.nPort, 0);
     HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"POST", (urlComp.lpszUrlPath + std::wstring(L"/client/negotiate")).c_str(), NULL, WINHTTP_NO_REFERER,
-        WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+                                            WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
 
     std::wstring headers = L"Authorization: Bearer " + accessToken + L"\r\n";
     headers += L"X-DEVICE-TOKEN: " + deviceToken + L"\r\n";
     headers += L"Content-Type: application/json\r\n";
+    headers += L"Origin: console\r\n";
 
     WinHttpAddRequestHeaders(hRequest, headers.c_str(), -1, WINHTTP_ADDREQ_FLAG_ADD);
 
-    const wchar_t* postData = L"{}";
+    const wchar_t *postData = L"{}";
     WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, (LPVOID)postData, wcslen(postData) * sizeof(wchar_t), wcslen(postData) * sizeof(wchar_t), 0);
     WinHttpReceiveResponse(hRequest, NULL);
 
     DWORD dwSize = 0;
     std::string response;
-    do {
+    do
+    {
         DWORD dwDownloaded = 0;
         WinHttpQueryDataAvailable(hRequest, &dwSize);
-        if (dwSize == 0) break;
+        if (dwSize == 0)
+            break;
 
         std::vector<char> buffer(dwSize + 1);
         WinHttpReadData(hRequest, buffer.data(), dwSize, &dwDownloaded);
@@ -108,9 +170,11 @@ std::string HttpPost(const std::wstring& url, const std::wstring& deviceToken, c
     return response;
 }
 
-std::wstring ExtractWebSocketUrl(const std::string& jsonResponse) {
+std::wstring ExtractWebSocketUrl(const std::string &jsonResponse)
+{
     size_t urlPos = jsonResponse.find("\"url\":\"");
-    if (urlPos == std::string::npos) return L"";
+    if (urlPos == std::string::npos)
+        return L"";
 
     size_t startPos = urlPos + 7;
     size_t endPos = jsonResponse.find("\"", startPos);
@@ -119,9 +183,11 @@ std::wstring ExtractWebSocketUrl(const std::string& jsonResponse) {
     return ConvertToWide(url);
 }
 
-std::wstring ExtractAccessToken(const std::string& jsonResponse) {
+std::wstring ExtractAccessToken(const std::string &jsonResponse)
+{
     size_t tokenPos = jsonResponse.find("\"accessToken\":\"");
-    if (tokenPos == std::string::npos) return L"";
+    if (tokenPos == std::string::npos)
+        return L"";
 
     size_t startPos = tokenPos + 15;
     size_t endPos = jsonResponse.find("\"", startPos);
@@ -130,11 +196,13 @@ std::wstring ExtractAccessToken(const std::string& jsonResponse) {
     return ConvertToWide(token);
 }
 
-std::wstring ExtractConnectionToken(const std::string& jsonResponse) {
+std::wstring ExtractConnectionToken(const std::string &jsonResponse)
+{
     // Log the JSON response for debugging
     std::cout << "Parsing connection token from JSON response: " << jsonResponse << std::endl;
     size_t tokenPos = jsonResponse.find("\"connectionToken\":\"");
-    if (tokenPos == std::string::npos) return L"";
+    if (tokenPos == std::string::npos)
+        return L"";
 
     size_t startPos = tokenPos + 20;
     size_t endPos = jsonResponse.find("\"", startPos);
@@ -143,10 +211,12 @@ std::wstring ExtractConnectionToken(const std::string& jsonResponse) {
     return ConvertToWide(token);
 }
 
-std::wstring ExtractConnectionId(const std::string& jsonResponse) {
+std::wstring ExtractConnectionId(const std::string &jsonResponse)
+{
     std::cout << "Parsing connection id from JSON response: " << jsonResponse << std::endl;
     size_t idPos = jsonResponse.find("\"connectionId\":\"");
-    if (idPos == std::string::npos) return L"";
+    if (idPos == std::string::npos)
+        return L"";
 
     size_t startPos = idPos + 16;
     size_t endPos = jsonResponse.find("\"", startPos);
@@ -155,8 +225,9 @@ std::wstring ExtractConnectionId(const std::string& jsonResponse) {
     return ConvertToWide(id);
 }
 
-void ConnectWebSocket(const std::wstring& fullUrl, const std::wstring& deviceToken) {
-    URL_COMPONENTS urlComp = { sizeof(urlComp) };
+void ConnectWebSocket(const std::wstring &fullUrl, const std::wstring &deviceToken)
+{
+    URL_COMPONENTS urlComp = {sizeof(urlComp)};
     wchar_t hostName[256], urlPath[1024];
     urlComp.lpszHostName = hostName;
     urlComp.dwHostNameLength = _countof(hostName);
@@ -167,62 +238,83 @@ void ConnectWebSocket(const std::wstring& fullUrl, const std::wstring& deviceTok
     HINTERNET hSession = WinHttpOpen(L"SignalRClient/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, NULL, NULL, 0);
     HINTERNET hConnect = WinHttpConnect(hSession, urlComp.lpszHostName, urlComp.nPort, 0);
     HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", urlComp.lpszUrlPath, NULL, WINHTTP_NO_REFERER,
-        WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+                                            WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
 
-    std::wstring headers = L"Connection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw==\r\n";
-    headers += L"X-DEVICE-TOKEN: " + deviceToken + L"\r\n";
+    // Generate a random base64 string for Sec-WebSocket-Key
+    std::string randomBase64 = generateRandomBase64String(22) + "==";
+    std::wstring secWebSocketKey = ConvertToWide(randomBase64);
+    
+    std::wstring headers = L"Connection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: " + secWebSocketKey + L"\r\n";
+    //headers += L"X-DEVICE-TOKEN: " + deviceToken + L"\r\n";
 
+    headers += L"Origin: console\r\n";
+    
     WinHttpAddRequestHeaders(hRequest, headers.c_str(), -1, WINHTTP_ADDREQ_FLAG_ADD);
 
-    std::wcout << L"Request Headers:\n" << headers << L"\n";
+    std::wcout << L"Request Headers:\n"
+               << headers << L"\n";
 
-    if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) {
+    if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0))
+    {
         std::wcerr << L"SendRequest failed.\n";
         return;
     }
-    if (!WinHttpReceiveResponse(hRequest, NULL)) {
+    if (!WinHttpReceiveResponse(hRequest, NULL))
+    {
         DWORD error = GetLastError();
         std::wcerr << L"ReceiveResponse failed. Error code: " << error << L"\n";
-        
+
         wchar_t errorMsg[512];
         FormatMessageW(
             FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
             NULL, error,
             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-            errorMsg, sizeof(errorMsg)/sizeof(wchar_t),
+            errorMsg, sizeof(errorMsg) / sizeof(wchar_t),
             NULL);
         std::wcerr << L"Error description: " << errorMsg << L"\n";
         return;
     }
+
+    DWORD option = WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET;
+    WinHttpSetOption(hRequest, WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, &option, sizeof(option));
+
     HINTERNET hWebSocket = WinHttpWebSocketCompleteUpgrade(hRequest, 0);
-    if (!hWebSocket) {
+    if (!hWebSocket)
+    {
         std::wcerr << L"WebSocket upgrade failed.\n";
 
         DWORD statusCode = 0;
         DWORD size = sizeof(statusCode);
-        if (WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_HEADER_NAME_BY_INDEX, WINHTTP_HEADER_NAME_BY_INDEX, &statusCode, &size, WINHTTP_NO_HEADER_INDEX)) {
+        if (WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_HEADER_NAME_BY_INDEX, WINHTTP_HEADER_NAME_BY_INDEX, &statusCode, &size, WINHTTP_NO_HEADER_INDEX))
+        {
             std::wcerr << L"HTTP Status Code: " << statusCode << L"\n";
         }
-        else {
+        else
+        {
             std::wcerr << L"Failed to retrieve HTTP status code.\n";
         }
 
         wchar_t buffer[1024];
         DWORD bufferSize = sizeof(buffer);
-        if (WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX, buffer, &bufferSize, WINHTTP_NO_HEADER_INDEX)) {
-            std::wcout << L"Response Headers:\n" << buffer << L"\n";
+        if (WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX, buffer, &bufferSize, WINHTTP_NO_HEADER_INDEX))
+        {
+            std::wcout << L"Response Headers:\n"
+                       << buffer << L"\n";
         }
-        else {
+        else
+        {
             std::wcerr << L"Failed to retrieve response headers.\n";
         }
 
         // Read the response body
         std::string responseBody;
         DWORD dwSize = 0;
-        do {
+        do
+        {
             DWORD dwDownloaded = 0;
             WinHttpQueryDataAvailable(hRequest, &dwSize);
-            if (dwSize == 0) break;
+            if (dwSize == 0)
+                break;
 
             std::vector<char> bodyBuffer(dwSize + 1);
             WinHttpReadData(hRequest, bodyBuffer.data(), dwSize, &dwDownloaded);
@@ -241,7 +333,7 @@ void ConnectWebSocket(const std::wstring& fullUrl, const std::wstring& deviceTok
 
     std::wcout << L"WebSocket connection established.\n";
 
-    const char* ping = "ping";
+    const char *ping = "ping";
     WinHttpWebSocketSend(hWebSocket, WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE, (PVOID)ping, strlen(ping));
 
     WinHttpWebSocketClose(hWebSocket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, NULL, 0);
@@ -249,8 +341,8 @@ void ConnectWebSocket(const std::wstring& fullUrl, const std::wstring& deviceTok
     WinHttpCloseHandle(hConnect);
     WinHttpCloseHandle(hSession);
 }
-
-int main() {
+int main()
+{
     std::wstring deviceToken = L"OTQxZjcwNTMtYzIzMi00MGE3LTkxYTUtNDVkOTc5ODUxN2QwfHx8N1IxOThdKTBkYmUhNGlEWEhHXkxZMnVjWkMoZDlt";
 
     // Step 1: Negotiate with API server
@@ -264,10 +356,13 @@ int main() {
     // Step 3: Second negotiation with Azure SignalR service
     std::wstring negotiateUrl = azureSignalRUrl;
     size_t queryPos = negotiateUrl.find(L'?');
-    if (queryPos != std::wstring::npos) {
+    if (queryPos != std::wstring::npos)
+    {
         // Insert /client/negotiate before the query string
         negotiateUrl.insert(queryPos, L"negotiate");
-    } else {
+    }
+    else
+    {
         // If no query string, just append /client/negotiate
         negotiateUrl += L"negotiate";
     }
@@ -280,8 +375,13 @@ int main() {
     std::wstring connectionId = ExtractConnectionId(secondNegotiateResponse);
     std::cout << "Connection ID: " << ConvertToNarrow(connectionId) << std::endl;
     std::cout << "Connection Token: " << ConvertToNarrow(connectionToken) << std::endl;
+
+    // Step 5: Encode connection token and access token
+    std::wstring encodedConnectionToken = ConvertToWide(UrlEncode(ConvertToNarrow(connectionToken)));
+    std::wstring encodedAccessToken = ConvertToWide(UrlEncode(ConvertToNarrow(accessToken)));
+
     // Step 5: Construct final WebSocket URL
-    std::wstring finalWebSocketUrl = azureSignalRUrl + L"&id=" + connectionToken + L"&access_token=" + accessToken;
+    std::wstring finalWebSocketUrl = azureSignalRUrl + L"&id=" + encodedConnectionToken + L"&access_token=" + encodedAccessToken;
     std::cout << "Final WebSocket URL: " << ConvertToNarrow(finalWebSocketUrl) << std::endl;
     // Step 6: Connect via WebSocket
     ConnectWebSocket(finalWebSocketUrl, deviceToken);
