@@ -183,7 +183,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="websocket.cpp" />
     <ClCompile Include="WinHTTPSignalRDemo.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="websocket.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

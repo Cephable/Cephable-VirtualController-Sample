@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SignalR Direct WebSocket Test</title>
+</head>
+<body>
+  <h1>SignalR WebSocket Test (No Second Negotiate)</h1>
+  <pre id="log"></pre>
+
+  <script>
+    const log = (msg) => {
+      document.getElementById('log').textContent += msg + '\n';
+      console.log(msg);
+    };
+
+    const deviceToken = 'OTQxZjcwNTMtYzIzMi00MGE3LTkxYTUtNDVkOTc5ODUxN2QwfHx8N1IxOThdKTBkYmUhNGlEWEhHXkxZMnVjWkMoZDlt';
+
+    async function connectDirectly() {
+      try {
+        // Step 1: Negotiate with your API
+        const apiNegotiate = await fetch('https://services.cephable.com/device/negotiate?negotiateVersion=1', {
+          method: 'GET',
+          headers: {
+            'X-DEVICE-TOKEN': deviceToken,
+            'Origin': 'http://localhost:3000'
+          }
+        });
+
+        const apiData = await apiNegotiate.json();
+        log('API Negotiate Response:');
+        log(JSON.stringify(apiData, null, 2));
+
+        // Step 2: Use the returned URL directly
+        const wsUrl = apiData.url.replace(/^https/, 'wss') + 
+          (apiData.accessToken ? `&access_token=${encodeURIComponent(apiData.accessToken)}` : '');
+        log('Connecting to WebSocket:');
+        log(wsUrl);
+
+        const socket = new WebSocket(wsUrl);
+
+        socket.onopen = () => {
+          log('WebSocket connected.');
+          socket.send('ping');
+        };
+
+        socket.onmessage = (event) => {
+          log('Message from server: ' + event.data);
+        };
+
+        socket.onerror = (err) => {
+          log('WebSocket error: ' + JSON.stringify(err));
+        };
+
+        socket.onclose = (event) => {
+          log(`WebSocket closed: code=${event.code}, reason=${event.reason}`);
+        };
+
+      } catch (err) {
+        log('Error: ' + err);
+      }
+    }
+
+    connectDirectly();
+  </script>
+</body>
+</html>
