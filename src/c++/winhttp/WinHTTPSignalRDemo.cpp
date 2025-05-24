@@ -8,9 +8,10 @@
 #include <iomanip>
 #include <sstream>
 #include <random>
-//#include "websocket.h"
+#include "websocket.h"
 
 #pragma comment(lib, "winhttp.lib")
+using namespace WinHttpWebSocketClient;
 
 std::wstring affinityCookie = L"";
 std::wstring asrsInstanceId = L"";
@@ -155,7 +156,7 @@ std::wstring ExtractAccessToken(const std::string &jsonResponse)
 }
 
 
-void ConnectWebSocket(const std::wstring &fullUrl, const std::wstring &deviceToken)
+void ConnectWebSocket(const std::wstring &fullUrl)
 {
     URL_COMPONENTS urlComp = {sizeof(urlComp)};
     wchar_t hostName[256], urlPath[1024];
@@ -276,6 +277,107 @@ void ConnectWebSocket(const std::wstring &fullUrl, const std::wstring &deviceTok
     WinHttpCloseHandle(hConnect);
     WinHttpCloseHandle(hSession);
 }
+
+void ConnectWebSocket2(const std::wstring& fullUrl)
+{
+    // Windows Error Code
+    DWORD errorCode;
+
+    // Our certificate variable for secure connections
+    PCCERT_CONTEXT pClientCertificate = NULL;
+
+    // Buffer length
+    const size_t bufferLength = 0x1000;
+
+    // Error buffer
+    WCHAR* buffer = NULL;
+
+    // WebSocket message buffer
+    CHAR* pMessageBuffer = NULL;
+
+
+    // Use WinHttpOpen to obtain a session handle
+    // The session should be opened in synchronous mode
+    HINTERNET hSession = WinHttpOpen(L"MyApp", WINHTTP_ACCESS_TYPE_NO_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+
+    // Allocate error buffer
+    buffer = (WCHAR*)malloc(sizeof(WCHAR) * bufferLength);
+    if (buffer == NULL)
+    {
+        wprintf(L"%ls", L"Not enough memory\n");
+        goto exit;
+    }
+
+    if (hSession == NULL)
+    {
+        errorCode = GetLastError();
+        PrintLastError(errorCode, buffer, bufferLength, L"WinHttpOpen()");
+        wprintf(L"%ls\n", buffer);
+        goto exit;
+    }
+
+    // Define our WebSocket
+    WebSocketClient webSocket;
+
+    // Open a certificate to secure our connections
+    //pClientCertificate = OpenCertificateByName(L"sullewarehouse.com", L"WebHosting", false);
+    //if (pClientCertificate == NULL)
+    //{
+        //wprintf(L"%ls", L"Could not find the desired client certificate!\n");
+    //}
+
+    // Initialize our WebSocket
+    // NOTE: If you do not provide the server with a certificate, data sent from the server will not be encrypted
+    if (webSocket.Initialize(hSession, pClientCertificate) != NO_ERROR)
+    {
+        PrintLastError(webSocket.ErrorCode, buffer, bufferLength, L"WebSocket.Initialize()");
+        wprintf(L"%ls\n", buffer);
+        goto exit;
+    }
+
+    // Attempt to connect to the WebSocket server
+    // NOTE: WinHTTP does not support "ws" or "wss" schemes in the URL, we can use "http" or "https" without issues
+    if (webSocket.Connect(fullUrl, WEBSOCKET_SECURE_CONNECTION) != NO_ERROR)
+    {
+        wprintf(L"%ls\n", webSocket.ErrorDescription);
+        if (webSocket.ErrorCode == 0x2F9A) {
+            wprintf(L"%ls\n", L"Check if you have admin privileges");
+        }
+        goto exit;
+    }
+
+    wprintf(L"%ls", L"Connection was a success!\n");
+
+    // Allocate message buffer
+    pMessageBuffer = (CHAR*)malloc(0x1000);
+    if (pMessageBuffer == NULL) {
+        wprintf(L"%ls", L"Failed to allocate message buffer!\n");
+        webSocket.Close(WINHTTP_WEB_SOCKET_CLOSE_STATUS::WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS);
+        goto exit;
+    }
+
+
+exit:
+
+    // Free message resources
+    if (pMessageBuffer) {
+        free(pMessageBuffer);
+    }
+
+    // Free WebSocket resources
+    webSocket.Free();
+
+    // Free certificate resources
+    if (pClientCertificate) {
+        CertFreeCertificateContext(pClientCertificate);
+    }
+
+    // Notify user that we are done
+    wprintf(L"%ls", L"Program Exited!\n");
+
+    // Exit
+    return;
+}
 int main()
 {
     std::wstring deviceToken = L"OTQxZjcwNTMtYzIzMi00MGE3LTkxYTUtNDVkOTc5ODUxN2QwfHx8N1IxOThdKTBkYmUhNGlEWEhHXkxZMnVjWkMoZDlt";
@@ -311,7 +413,7 @@ int main()
     std::wstring finalWebSocketUrl = azureSignalRUrl + L"&access_token=" + accessToken;
     std::cout << "Final WebSocket URL: " << ConvertToNarrow(finalWebSocketUrl) << std::endl;
     // Step 6: Connect via WebSocket
-    ConnectWebSocket(finalWebSocketUrl, deviceToken);
+    ConnectWebSocket2(finalWebSocketUrl);
 
     return 0;
 }

@@ -41,7 +41,7 @@ namespace WinHttpWebSocketClient
 		// Initialize the WebSocket client class
 		DWORD Initialize(HINTERNET hSession, PCCERT_CONTEXT pCertContext);
 		// Connect to a WebSocket server
-		DWORD Connect(WCHAR* host, DWORD flags, WCHAR* protocol = NULL);
+		DWORD Connect(std::wstring host, DWORD flags, WCHAR* protocol = NULL);
 		// Receive data from the WebSocket server
 		DWORD Receive(void* pBuffer, DWORD dwBufferLength, DWORD* pdwBytesReceived, WINHTTP_WEB_SOCKET_BUFFER_TYPE* pBufferType);
 		// Send data to the WebSocket server

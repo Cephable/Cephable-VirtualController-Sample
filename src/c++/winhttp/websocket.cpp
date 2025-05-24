@@ -257,7 +257,7 @@ DWORD WebSocketClient::Close(WINHTTP_WEB_SOCKET_CLOSE_STATUS status, CHAR* reaso
 	return this->ErrorCode;
 }
 
-DWORD WebSocketClient::Connect(WCHAR* host, DWORD flags, WCHAR* protocol)
+DWORD WebSocketClient::Connect(std::wstring host, DWORD flags, WCHAR* protocol)
 {
 
 
@@ -324,7 +324,7 @@ DWORD WebSocketClient::Connect(WCHAR* host, DWORD flags, WCHAR* protocol)
 	UrlComponents.dwExtraInfoLength = -1;
 
 	// Get the individual parts of the url
-	if (!WinHttpCrackUrl(host, NULL, 0, &UrlComponents))
+	if (!WinHttpCrackUrl(host.c_str(), NULL, 0, &UrlComponents))
 	{
 		// Handle error
 		errorCode = GetLastError();
