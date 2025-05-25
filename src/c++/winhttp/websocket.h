@@ -1,3 +1,4 @@
+
 #ifndef WINHTTP_WEB_SOCKET_CLIENT_H
 #define WINHTTP_WEB_SOCKET_CLIENT_H
 
@@ -12,7 +13,7 @@
 namespace WinHttpWebSocketClient
 {
 	// Print a Windows Error Code
-	void PrintLastError(DWORD errorCode, WCHAR* des, size_t desLen, std::wstring, bool append = false);
+	void PrintLastError(DWORD errorCode, WCHAR* des, size_t desLen, const std::wstring action, bool append = false);
 
 	// Open a certificate from a Windows certificate store
 	// - If store is NULL then the function searches "My" and "WebHosting" stores
@@ -41,7 +42,7 @@ namespace WinHttpWebSocketClient
 		// Initialize the WebSocket client class
 		DWORD Initialize(HINTERNET hSession, PCCERT_CONTEXT pCertContext);
 		// Connect to a WebSocket server
-		DWORD Connect(std::wstring host, DWORD flags, WCHAR* protocol = NULL);
+		DWORD Connect(const std::wstring host, DWORD flags, WCHAR* protocol = NULL);
 		// Receive data from the WebSocket server
 		DWORD Receive(void* pBuffer, DWORD dwBufferLength, DWORD* pdwBytesReceived, WINHTTP_WEB_SOCKET_BUFFER_TYPE* pBufferType);
 		// Send data to the WebSocket server

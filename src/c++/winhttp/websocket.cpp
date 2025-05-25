@@ -12,7 +12,7 @@
 #include "websocket.h"
 using namespace WinHttpWebSocketClient;
 
-void WinHttpWebSocketClient::PrintLastError(DWORD errorCode, WCHAR* des, size_t desLen, std::wstring action, bool append)
+void WinHttpWebSocketClient::PrintLastError(DWORD errorCode, WCHAR* des, size_t desLen, const std::wstring action, bool append)
 {
 	size_t offset;
 
@@ -28,76 +28,76 @@ void WinHttpWebSocketClient::PrintLastError(DWORD errorCode, WCHAR* des, size_t 
 	}
 
 	if (errorCode == ERROR_INVALID_OPERATION) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_INVALID_OPERATION");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_INVALID_OPERATION");
 	}
 	else if (errorCode == ERROR_WINHTTP_CANNOT_CONNECT) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_CANNOT_CONNECT");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_CANNOT_CONNECT");
 	}
 	else if (errorCode == ERROR_WINHTTP_INVALID_SERVER_RESPONSE) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_INVALID_SERVER_RESPONSE");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_INVALID_SERVER_RESPONSE");
 	}
 	else if (errorCode == ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED");
 	}
 	else if (errorCode == ERROR_WINHTTP_CONNECTION_ERROR) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_CONNECTION_ERROR");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_CONNECTION_ERROR");
 	}
 	else if (errorCode == ERROR_WINHTTP_INCORRECT_HANDLE_STATE) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_INCORRECT_HANDLE_STATE");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_INCORRECT_HANDLE_STATE");
 	}
 	else if (errorCode == ERROR_WINHTTP_INCORRECT_HANDLE_TYPE) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_INCORRECT_HANDLE_TYPE");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_INCORRECT_HANDLE_TYPE");
 	}
 	else if (errorCode == ERROR_WINHTTP_INTERNAL_ERROR) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_INTERNAL_ERROR");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_INTERNAL_ERROR");
 	}
 	else if (errorCode == ERROR_WINHTTP_INVALID_URL) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_INVALID_URL");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_INVALID_URL");
 	}
 	else if (errorCode == ERROR_WINHTTP_LOGIN_FAILURE) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_LOGIN_FAILURE");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_LOGIN_FAILURE");
 	}
 	else if (errorCode == ERROR_WINHTTP_NAME_NOT_RESOLVED) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_NAME_NOT_RESOLVED");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_NAME_NOT_RESOLVED");
 	}
 	else if (errorCode == ERROR_WINHTTP_OPERATION_CANCELLED) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_OPERATION_CANCELLED");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_OPERATION_CANCELLED");
 	}
 	else if (errorCode == ERROR_WINHTTP_RESPONSE_DRAIN_OVERFLOW) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_RESPONSE_DRAIN_OVERFLOW");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_RESPONSE_DRAIN_OVERFLOW");
 	}
 	else if (errorCode == ERROR_WINHTTP_SECURE_FAILURE) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_SECURE_FAILURE");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_SECURE_FAILURE");
 	}
 	else if (errorCode == ERROR_WINHTTP_SHUTDOWN) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_SHUTDOWN");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_SHUTDOWN");
 	}
 	else if (errorCode == ERROR_WINHTTP_TIMEOUT) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_TIMEOUT");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_TIMEOUT");
 	}
 	else if (errorCode == ERROR_WINHTTP_UNRECOGNIZED_SCHEME) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_UNRECOGNIZED_SCHEME");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_UNRECOGNIZED_SCHEME");
 	}
 	else if (errorCode == ERROR_NOT_ENOUGH_MEMORY) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_NOT_ENOUGH_MEMORY");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_NOT_ENOUGH_MEMORY");
 	}
 	else if (errorCode == ERROR_INVALID_PARAMETER) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_INVALID_PARAMETER");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_INVALID_PARAMETER");
 	}
 	else if (errorCode == ERROR_WINHTTP_RESEND_REQUEST) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_RESEND_REQUEST");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_RESEND_REQUEST");
 	}
 	else if (errorCode == ERROR_WINHTTP_INVALID_OPTION) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_INVALID_OPTION");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_INVALID_OPTION");
 	}
 	else if (errorCode == ERROR_WINHTTP_OPTION_NOT_SETTABLE) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_WINHTTP_OPTION_NOT_SETTABLE");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_WINHTTP_OPTION_NOT_SETTABLE");
 	}
 	else if (errorCode == ERROR_INSUFFICIENT_BUFFER) {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action, L"failed; ERROR_INSUFFICIENT_BUFFER");
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls", action.c_str(), L"failed; ERROR_INSUFFICIENT_BUFFER");
 	}
 	else {
-		swprintf_s(&des[offset], desLen - offset, L"%ls %ls 0x%lX", action, L"failed; error code =", errorCode);
+		swprintf_s(&des[offset], desLen - offset, L"%ls %ls 0x%lX", action.c_str(), L"failed; error code =", errorCode);
 	}
 }
 
@@ -257,12 +257,11 @@ DWORD WebSocketClient::Close(WINHTTP_WEB_SOCKET_CLOSE_STATUS status, CHAR* reaso
 	return this->ErrorCode;
 }
 
-DWORD WebSocketClient::Connect(std::wstring host, DWORD flags, WCHAR* protocol)
+DWORD WebSocketClient::Connect(const std::wstring host, DWORD flags, WCHAR* protocol)
 {
 
 
 	DWORD dwFlags = 0;
-
 	// Return 0 for success
 	DWORD errorCode = ERROR_SUCCESS;
 
@@ -304,6 +303,9 @@ DWORD WebSocketClient::Connect(std::wstring host, DWORD flags, WCHAR* protocol)
 		goto errorExit;
 	}
 
+
+	std::cout << urlPath << std::endl;
+
 	// Clear error's
 	this->ErrorCode = 0;
 	this->ErrorDescription[0] = NULL;
@@ -336,6 +338,9 @@ DWORD WebSocketClient::Connect(std::wstring host, DWORD flags, WCHAR* protocol)
 	wcsncpy_s(scheme, 0x20, UrlComponents.lpszScheme, UrlComponents.dwSchemeLength);
 	wcsncpy_s(hostName, 0x100, UrlComponents.lpszHostName, UrlComponents.dwHostNameLength);
 	wcsncpy_s(urlPath, 0x1000, UrlComponents.lpszUrlPath, UrlComponents.dwUrlPathLength);
+
+	std::cout << urlPath << std::endl;
+
 
 	if (UrlComponents.nPort == 0) {
 		if ((_wcsicmp(scheme, L"wss") == 0) || (_wcsicmp(scheme, L"https") == 0)) {

@@ -31,7 +31,7 @@
         log(JSON.stringify(apiData, null, 2));
 
         // Step 2: Use the returned URL directly
-        const wsUrl = apiData.url.replace(/^https/, 'wss') + 
+        const wsUrl = apiData.url + 
           (apiData.accessToken ? `&access_token=${encodeURIComponent(apiData.accessToken)}` : '');
         log('Connecting to WebSocket:');
         log(wsUrl);
@@ -40,7 +40,7 @@
 
         socket.onopen = () => {
           log('WebSocket connected.');
-          socket.send('ping');
+          socket.send(JSON.stringify({"protocol":"json","version":1}) + "\x1e");
         };
 
         socket.onmessage = (event) => {
