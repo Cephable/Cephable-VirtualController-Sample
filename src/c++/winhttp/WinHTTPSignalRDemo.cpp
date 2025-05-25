@@ -27,25 +27,6 @@ std::string ConvertToNarrow(const std::wstring& wstr)
 {
 	return std::string(wstr.begin(), wstr.end());
 }
-std::string generateRandomBase64String(size_t length) {
-	const std::string base64_chars =
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-		"abcdefghijklmnopqrstuvwxyz"
-		"0123456789+/";
-
-	std::random_device rd;  // Seed for random number generator
-	std::mt19937 gen(rd()); // Mersenne Twister RNG
-	std::uniform_int_distribution<> dis(0, base64_chars.size() - 1);
-
-	std::string random_base64;
-	random_base64.reserve(length);
-
-	for (size_t i = 0; i < length; ++i) {
-		random_base64 += base64_chars[dis(gen)];
-	}
-
-	return random_base64;
-}
 
 // Simple Base64 encoding table
 const char* base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -250,174 +231,102 @@ void DumpWinHttpErrorResponse(HINTERNET hRequest)
 		std::cout << "[i] No response body available or query failed." << std::endl;
 	}
 }
-
 void ConnectWebSocket(const std::wstring& fullUrl, const std::wstring& accessToken)
 {
-
-
-	// Our certificate variable for secure connections
-	PCCERT_CONTEXT pClientCertificate = NULL;
 	URL_COMPONENTS urlComp = { sizeof(urlComp) };
 	wchar_t hostName[256], urlPath[4096];
 	urlComp.lpszHostName = hostName;
 	urlComp.dwHostNameLength = _countof(hostName);
 	urlComp.lpszUrlPath = urlPath;
 	urlComp.dwUrlPathLength = _countof(urlPath);
-	WinHttpCrackUrl(fullUrl.c_str(), 0, 0, &urlComp);
+	if (!WinHttpCrackUrl(fullUrl.c_str(), 0, 0, &urlComp)) {
+		std::wcerr << L"WinHttpCrackUrl failed: " << GetLastError() << L"\n";
+		return;
+	}
 
-	/*pClientCertificate = OpenCertificateByName(L"enabled-prod.service.signalr.net", L"WebHosting", false);
-	if (pClientCertificate == NULL)
-	{
-		wprintf(L"%ls", L"Could not find the desired client certificate!\n");
-	}*/
+	HINTERNET hSession = WinHttpOpen(L"SignalRClient", WINHTTP_ACCESS_TYPE_NO_PROXY,
+		WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+	if (!hSession) {
+		std::wcerr << L"WinHttpOpen failed: " << GetLastError() << L"\n";
+		return;
+	}
 
-	HINTERNET hSession = WinHttpOpen(L"SignalRClient/1.0", WINHTTP_ACCESS_TYPE_NO_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 	DWORD secureProtocols = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
 	WinHttpSetOption(hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secureProtocols, sizeof(secureProtocols));
-
-	// Set timeout values (in milliseconds)
-	DWORD dwResolveTimeout = 5000;       // DNS resolution timeout
-	DWORD dwConnectTimeout = 10000;      // Connection timeout
-	DWORD dwSendTimeout = 10000;         // Send timeout
-	DWORD dwReceiveTimeout = 30000;      // Receive timeout
-
-	WinHttpSetTimeouts(
-		hSession,               // HINTERNET handle from WinHttpOpen
-		dwResolveTimeout,
-		dwConnectTimeout,
-		dwSendTimeout,
-		dwReceiveTimeout
-	);
-
-	std::wcout << "Sending to host: " << urlComp.lpszHostName << L"\r\n";
-	std::wcout << "With path: " << urlComp.lpszUrlPath << L"\r\n";
+	WinHttpSetTimeouts(hSession, 5000, 10000, 10000, 30000);
 
 	HINTERNET hConnect = WinHttpConnect(hSession, urlComp.lpszHostName, INTERNET_DEFAULT_HTTPS_PORT, 0);
+	if (!hConnect) {
+		std::wcerr << L"WinHttpConnect failed: " << GetLastError() << L"\n";
+		WinHttpCloseHandle(hSession);
+		return;
+	}
+
 	HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", urlComp.lpszUrlPath, NULL, WINHTTP_NO_REFERER,
 		WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+	if (!hRequest) {
+		std::wcerr << L"WinHttpOpenRequest failed: " << GetLastError() << L"\n";
+		WinHttpCloseHandle(hConnect);
+		WinHttpCloseHandle(hSession);
+		return;
+	}
 
-	// Generate a random base64 string for Sec-WebSocket-Key
+	// WebSocket headers
 	std::wstring secWebSocketKey = ConvertToWide(generateRandomSecWebSocketKey());
-
-
-	std::wstring headers = L"Connection: Upgrade\r\n";
-	headers += L"Upgrade: websocket\r\n";
-	headers += L"Sec-WebSocket-Version: 13\r\n";
-	headers += L"Sec-WebSocket-Key: " + secWebSocketKey + L"\r\n";
-	headers += L"Authorization: Bearer " + accessToken + L"\r\n";
-
-	headers += L"Host: " + std::wstring(urlComp.lpszHostName, urlComp.dwHostNameLength) + L"\r\n";
-
-	//headers += L"Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits\r\n";
-	//headers += L"Pragma: no-cache\r\n";
-	//headers += L"Cache-Control: no-cache\r\n";
-	headers += L"Origin: https://enabled-prod.service.signalr.net\r\n";
-
-	headers += L"User-Agent: SignalRClient/1.0\r\n";
+	std::wstring headers =
+		L"Connection: Upgrade\r\n"
+		L"Upgrade: websocket\r\n"
+		L"Sec-WebSocket-Version: 13\r\n"
+		L"Sec-WebSocket-Key: " + secWebSocketKey + L"\r\n"
+		L"Pragma: no-cache\r\n"
+		L"Cache-Control: no-cache\r\n"
+		L"Origin: console\r\n";
 
 	WinHttpAddRequestHeaders(hRequest, headers.c_str(), -1, WINHTTP_ADDREQ_FLAG_ADD);
 
-	//WinHttpSetOption(hRequest, WINHTTP_OPTION_CLIENT_CERT_CONTEXT, WINHTTP_NO_CLIENT_CERT_CONTEXT, 0);
-
-	std::wcout << L"Request Headers:\n"
-		<< headers << L"\n";
-
-
+	// Set option to upgrade to WebSocket
 	DWORD option = WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET;
 	WinHttpSetOption(hRequest, WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, &option, sizeof(option));
 
-	DWORD redirectPolicy = WINHTTP_OPTION_REDIRECT_POLICY_ALWAYS;
-	WinHttpSetOption(hRequest, WINHTTP_OPTION_REDIRECT_POLICY, &redirectPolicy, sizeof(redirectPolicy));
+	std::wcout << L"[i] Sending WebSocket request...\n" << headers << L"\n";
 
-	DWORD secureFlags = SECURITY_FLAG_IGNORE_UNKNOWN_CA |
-		SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
-		SECURITY_FLAG_IGNORE_CERT_CN_INVALID |
-		SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE;
-	WinHttpSetOption(hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &secureFlags, sizeof(secureFlags));
-
-
-	if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0))
-	{
-		std::wcerr << L"SendRequest failed.\n";
-		return;
-	}
-
-	if (!WinHttpReceiveResponse(hRequest, NULL))
-	{
-		DWORD error = GetLastError();
-		std::wcerr << L"ReceiveResponse failed. Error code: " << error << L"\n";
-
-		// Dump any server response if available
+	if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) {
+		std::wcerr << L"[!] SendRequest failed. Error code: " << GetLastError() << L"\n";
 		DumpWinHttpErrorResponse(hRequest);
-
-		return;
-	}
-
-	HINTERNET hWebSocket = WinHttpWebSocketCompleteUpgrade(hRequest, 0);
-	const char* handshake = "{\"protocol\":\"json\",\"version\":1}\x1e"; // \x1e is the SignalR record separator
-	WinHttpWebSocketSend(hWebSocket, WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE, (PVOID)handshake, strlen(handshake));
-
-	if (!hWebSocket)
-	{
-		std::wcerr << L"WebSocket upgrade failed.\n";
-
-		DWORD statusCode = 0;
-		DWORD size = sizeof(statusCode);
-		if (WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_HEADER_NAME_BY_INDEX, WINHTTP_HEADER_NAME_BY_INDEX, &statusCode, &size, WINHTTP_NO_HEADER_INDEX))
-		{
-			std::wcerr << L"HTTP Status Code: " << statusCode << L"\n";
-		}
-		else
-		{
-			std::wcerr << L"Failed to retrieve HTTP status code.\n";
-		}
-
-		wchar_t buffer[1024];
-		DWORD bufferSize = sizeof(buffer);
-		if (WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX, buffer, &bufferSize, WINHTTP_NO_HEADER_INDEX))
-		{
-			std::wcout << L"Response Headers:\n"
-				<< buffer << L"\n";
-		}
-		else
-		{
-			std::wcerr << L"Failed to retrieve response headers.\n";
-		}
-
-		// Read the response body
-		std::string responseBody;
-		DWORD dwSize = 0;
-		do
-		{
-			DWORD dwDownloaded = 0;
-			WinHttpQueryDataAvailable(hRequest, &dwSize);
-			if (dwSize == 0)
-				break;
-
-			std::vector<char> bodyBuffer(dwSize + 1);
-			WinHttpReadData(hRequest, bodyBuffer.data(), dwSize, &dwDownloaded);
-			bodyBuffer[dwDownloaded] = 0; // Null-terminate
-			responseBody.append(bodyBuffer.data(), dwDownloaded);
-		} while (dwSize > 0);
-
-		std::cout << "Response Body:" << std::endl;
-		std::cout << responseBody << std::endl;
-
 		WinHttpCloseHandle(hRequest);
 		WinHttpCloseHandle(hConnect);
 		WinHttpCloseHandle(hSession);
 		return;
 	}
 
-	std::wcout << L"WebSocket connection established.\n";
+	if (!WinHttpReceiveResponse(hRequest, 0)) {
+		std::wcerr << L"[!] ReceiveResponse failed. Error code: " << GetLastError() << L"\n";
+		DumpWinHttpErrorResponse(hRequest);
+		WinHttpCloseHandle(hRequest);
+		WinHttpCloseHandle(hConnect);
+		WinHttpCloseHandle(hSession);
+		return;
+	}
 
+	HINTERNET hWebSocket = WinHttpWebSocketCompleteUpgrade(hRequest, 0);
+	if (!hWebSocket) {
+		std::wcerr << L"[!] WebSocket upgrade failed. Error code: " << GetLastError() << L"\n";
+		DumpWinHttpErrorResponse(hRequest);
+		WinHttpCloseHandle(hRequest);
+		WinHttpCloseHandle(hConnect);
+		WinHttpCloseHandle(hSession);
+		return;
+	}
 
+	std::wcout << L"[+] WebSocket connection established.\n";
 
-	/*const char* ping = "ping";
-	WinHttpWebSocketSend(hWebSocket, WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE, (PVOID)ping, strlen(ping));*/
+	const char* handshake = "{\"protocol\":\"json\",\"version\":1}\x1e"; // Signalr needs the \x1e for line separation of json body
+	WinHttpWebSocketSend(hWebSocket, WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE, (PVOID)handshake, strlen(handshake));
 
-	WinHttpWebSocketClose(hWebSocket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, NULL, 0);
+	WinHttpWebSocketClose(hWebSocket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
+
 	WinHttpCloseHandle(hWebSocket);
+	WinHttpCloseHandle(hRequest);
 	WinHttpCloseHandle(hConnect);
 	WinHttpCloseHandle(hSession);
 }
@@ -554,7 +463,7 @@ void TestWebSocketEcho()
 
 int main()
 {
-	std::wstring deviceToken = L"OTQxZjcwNTMtYzIzMi00MGE3LTkxYTUtNDVkOTc5ODUxN2QwfHx8N1IxOThdKTBkYmUhNGlEWEhHXkxZMnVjWkMoZDlt";
+	std::wstring deviceToken = L"[Your device token here]"; // Replace with your actual device token
 
 	// Step 1: Negotiate with API server
 	std::string negotiateResponse = HttpGet(L"services.cephable.com", L"/device/negotiate?negotiateVersion=1", deviceToken);
@@ -586,9 +495,11 @@ int main()
 	// Step 5: Construct final WebSocket URL
 	std::wstring finalWebSocketUrl = azureSignalRUrl + L"&access_token=" + accessToken;
 	std::cout << "Final WebSocket URL: " << ConvertToNarrow(finalWebSocketUrl) << std::endl;
+
 	// Step 6: Connect via WebSocket
-	// 
-	
+
+
+	// usefule for testing raw websocket connection against an echo server
 	//TestWebSocketEcho();
 
 	ConnectWebSocket(finalWebSocketUrl, accessToken);

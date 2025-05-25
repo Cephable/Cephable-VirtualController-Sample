@@ -13,7 +13,7 @@
       console.log(msg);
     };
 
-    const deviceToken = 'OTQxZjcwNTMtYzIzMi00MGE3LTkxYTUtNDVkOTc5ODUxN2QwfHx8N1IxOThdKTBkYmUhNGlEWEhHXkxZMnVjWkMoZDlt';
+    const deviceToken = '[Enter your device token here]'; // Replace with your actual device token
 
     async function connectDirectly() {
       try {
@@ -22,7 +22,6 @@
           method: 'GET',
           headers: {
             'X-DEVICE-TOKEN': deviceToken,
-            'Origin': 'http://localhost:3000'
           }
         });
 
