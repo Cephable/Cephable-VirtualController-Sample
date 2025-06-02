@@ -1,14 +1,14 @@
-# WORK IN PROGRESS NOTICE
+# WinHTTP with libHttpClient c++ Virtual Controller Demo
 
-This project is currently a work in progress, and may not work end to end on all devices yet.
+This demo uses winhttp for HTTP requests but libHttpClient for the websocket handshake and connection and visual studio to make a 2 step connection to the Cephable Device Hub. To get started, use the Cephable portal to create an Auth Client and device, then use the Cephable API at https://services.cephable.com/swagger to create a UserDevice and UserDeviceToken. You'll then use that token in this code to create your request and connect.
 
-Currently this project uses WinHTTP natively to make a negotiation GET request to the Cephable services API to retrieve the correct Device Hub server to connect to and an access token to authenticate against it which is then used to make a GET request with a websocket upgrade to connect to the hub.
+You can of course, replace the winhttp process and run the entire thing through libHttpClient since it has an even more robust HTTP process, but this was built on top of the samples at `../winhttp` in this repository in order to provide an alternative websocket connection that works.
 
-Current issues:
+This sample is meant for developers building in C++ on Microsoft platforms such as:
+- win32
+- UWP
+- Xbox
 
-- The RetrieveResponse call fails with an error code of 12152 implying the server sent back an unexpected/malformed response. Current hunch is that this is due to some unknown TLS handshake issues from the winhttp client
-- The signalr server traces indicate that the server receives the request correctly, generates a connection, but then receives a HandShake Cancelled event which does not necessarly mean a TLS handshake, but rather a SignalR handshake. The server is expecting the client to start the websocket connection from the response sent and then send the first payload (which is wired up in the code), but the client cannot proceed with the bad response.
+- https://github.com/microsoft/libHttpClient
 
-# WinHTTP c++ Virtual Controller Demo
-
-This demo uses winhttp and visual studio to make a 2 step connection to the Cephable Device Hub. To get started, use the Cephable portal to create an Auth Client and device, then use the Cephable API at https://services.cephable.com/swagger to create a UserDevice and UserDeviceToken. You'll then use that token in this code to create your request and connect.
+Websocket implementation originally taken from https://github.com/microsoft/libHttpClient/tree/main/Samples/Win32WebSocket and adapted to the SignalR standard.
