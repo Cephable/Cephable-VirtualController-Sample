@@ -500,58 +500,52 @@ void ConnectWebSocket(const std::wstring& fullUrl, const std::wstring& accessTok
 	printf_s("Calling HCWebSocketConnect...\n");
 	HCWebSocketConnectAsync(url.data(), "", websocketContext->handle, asyncBlock);
 	XAsyncGetStatus(asyncBlock, true);
-
-	uint32_t sendLoops = 2;
-	for (uint32_t i = 1; i <= sendLoops; i++)
-	{
-		// Test with message just larger than the configured receive buffer size
-		char webMsg[4100];
-		for (uint32_t j = 0; j < sizeof(webMsg); ++j)
+	// Send the SignalR handshake message
+	const char* handshakeMsg = "{\"protocol\":\"json\",\"version\":1}\x1e"; // SignalR handshake with JSON protocol
+	
+	asyncBlock = new XAsyncBlock{};
+	asyncBlock->queue = g_queue;
+	asyncBlock->callback = [](XAsyncBlock* asyncBlock)
 		{
-			webMsg[j] = 'X';
-		}
-		webMsg[sizeof(webMsg) - 1] = '\0';
+			WebSocketCompletionResult result = {};
+			HRESULT hr = HCGetWebSocketSendMessageResult(asyncBlock, &result);
+			assert(SUCCEEDED(hr));
 
-		asyncBlock = new XAsyncBlock{};
-		asyncBlock->queue = g_queue;
-		asyncBlock->callback = [](XAsyncBlock* asyncBlock)
+			if (SUCCEEDED(hr))
 			{
-				WebSocketCompletionResult result = {};
-				HRESULT hr = HCGetWebSocketSendMessageResult(asyncBlock, &result);
-				assert(SUCCEEDED(hr));
+				printf_s("SignalR handshake sent: %d, %d\n", result.errorCode, result.platformErrorCode);
+			}
+			delete asyncBlock;
+		};
 
-				if (SUCCEEDED(hr))
-				{
-					printf_s("HCWebSocketSendMessage complete: %d, %d\n", result.errorCode, result.platformErrorCode);
-				}
-				delete asyncBlock;
-			};
+	printf_s("Sending SignalR handshake message: %s\n", handshakeMsg);
+	HCWebSocketSendMessageAsync(websocketContext->handle, handshakeMsg, asyncBlock);
 
-		printf_s("Calling HCWebSocketSend with message \"%s\" and waiting for response...\n", webMsg);
-		HCWebSocketSendMessageAsync(websocketContext->handle, webMsg, asyncBlock);
-
-		asyncBlock = new XAsyncBlock{};
-		asyncBlock->queue = g_queue;
-		asyncBlock->callback = [](XAsyncBlock* asyncBlock)
-			{
-				WebSocketCompletionResult result = {};
-				HRESULT hr = HCGetWebSocketSendMessageResult(asyncBlock, &result);
-				assert(SUCCEEDED(hr));
-
-				if (SUCCEEDED(hr))
-				{
-					printf_s("HCWebSocketSendBinaryMessageAsync complete: %d, %d\n", result.errorCode, result.platformErrorCode);
-				}
-
-				delete asyncBlock;
-			};
-
-		HCWebSocketSendBinaryMessageAsync(websocketContext->handle, (uint8_t*)webMsg, 100, asyncBlock);
-	}
-
-	while (websocketContext->messagesReceived < sendLoops * 2) // Two messages sent each loop iteration
+	// Wait for handshake response
+	printf_s("Waiting for SignalR handshake response...\n");
+	
+	// Wait a reasonable amount of time for the server to respond to our handshake
+	// The standard wait loop just monitors messagesReceived count
+	const uint32_t maxWaitMs = 5000; // 5 seconds timeout
+	uint32_t waitedMs = 0;
+	const uint32_t sleepIntervalMs = 100;
+	
+	while (websocketContext->messagesReceived < 1 && waitedMs < maxWaitMs)
 	{
-		Sleep(10);
+		Sleep(sleepIntervalMs);
+		waitedMs += sleepIntervalMs;
+	}
+	
+	if (websocketContext->messagesReceived < 1)
+	{
+		printf_s("Warning: No handshake response received within timeout.\n");
+	}
+	else
+	{
+		printf_s("SignalR handshake completed successfully.\n");
+		
+		// Now you can send additional messages if needed
+		// For example, you could join a hub or invoke a method
 	}
 
 	printf_s("Calling HCWebSocketDisconnect...\n");
