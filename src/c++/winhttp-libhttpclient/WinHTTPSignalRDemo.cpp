@@ -558,7 +558,7 @@ void ConnectWebSocket(const std::wstring& fullUrl, const std::wstring& accessTok
 
 int main()
 {
-	std::wstring deviceToken = L"YTRmYjg5NDItMTVkMS00OTc5LWE3YjYtYTY3MjQyMTJiOTZhfHx8VkRnKUBTKihjbzNyZE1DSnpVQzNGMzZlZ19kN0hK"; // Replace with your actual device token
+	std::wstring deviceToken = L"[Your Device Token Here]"; // Replace with your actual device token
 
 	// Step 1: Negotiate with API server
 	std::string negotiateResponse = HttpGet(L"services.cephable.com", L"/device/negotiate?negotiateVersion=1", deviceToken);
