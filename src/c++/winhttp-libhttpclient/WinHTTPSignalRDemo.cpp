@@ -3,6 +3,8 @@
 #include <winhttp.h>
 #include <iostream>
 #include <string>
+#include <locale>
+#include <codecvt>
 #include <vector>
 #include <cctype>
 #include <iomanip>
@@ -10,10 +12,10 @@
 #include <random>
 #include <cstdlib>
 #include <ctime>
-#include "websocket.h"
-
+#include <httpClient/httpClient.h>
+#include <atomic>
+#include <assert.h>
 #pragma comment(lib, "winhttp.lib")
-using namespace WinHttpWebSocketClient;
 
 std::wstring affinityCookie = L"";
 std::wstring asrsInstanceId = L"";
@@ -27,6 +29,232 @@ std::string ConvertToNarrow(const std::wstring& wstr)
 {
 	return std::string(wstr.begin(), wstr.end());
 }
+
+
+class win32_handle
+{
+public:
+	win32_handle() : m_handle(nullptr)
+	{
+	}
+
+	~win32_handle()
+	{
+		if (m_handle != nullptr) CloseHandle(m_handle);
+		m_handle = nullptr;
+	}
+
+	void set(HANDLE handle)
+	{
+		m_handle = handle;
+	}
+
+	HANDLE get() { return m_handle; }
+
+private:
+	HANDLE m_handle;
+};
+
+win32_handle g_stopRequestedHandle;
+win32_handle g_workReadyHandle;
+win32_handle g_completionReadyHandle;
+win32_handle g_exampleTaskDone;
+
+DWORD g_targetNumThreads = 2;
+HANDLE g_hActiveThreads[10] = { 0 };
+DWORD g_defaultIdealProcessor = 0;
+DWORD g_numActiveThreads = 0;
+
+XTaskQueueHandle g_queue;
+XTaskQueueRegistrationToken g_callbackToken;
+
+DWORD WINAPI background_thread_proc(LPVOID lpParam)
+{
+	HANDLE hEvents[3] =
+	{
+		g_workReadyHandle.get(),
+		g_completionReadyHandle.get(),
+		g_stopRequestedHandle.get()
+	};
+
+	XTaskQueueHandle queue;
+	XTaskQueueDuplicateHandle(g_queue, &queue);
+	HCTraceSetTraceToDebugger(true);
+	HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
+
+	bool stop = false;
+	while (!stop)
+	{
+		DWORD dwResult = WaitForMultipleObjectsEx(3, hEvents, false, INFINITE, false);
+		switch (dwResult)
+		{
+		case WAIT_OBJECT_0: // work ready
+			if (XTaskQueueDispatch(queue, XTaskQueuePort::Work, 0))
+			{
+				// If we executed work, set our event again to check next time.
+				SetEvent(g_workReadyHandle.get());
+			}
+			break;
+
+		case WAIT_OBJECT_0 + 1: // completed 
+			// Typically completions should be dispatched on the game thread, but
+			// for this simple XAML app we're doing it here
+			if (XTaskQueueDispatch(queue, XTaskQueuePort::Completion, 0))
+			{
+				// If we executed a completion set our event again to check next time
+				SetEvent(g_completionReadyHandle.get());
+			}
+			break;
+
+		default:
+			stop = true;
+			break;
+		}
+	}
+
+	XTaskQueueCloseHandle(queue);
+	return 0;
+}
+
+void CALLBACK HandleAsyncQueueCallback(
+	_In_ void* context,
+	_In_ XTaskQueueHandle queue,
+	_In_ XTaskQueuePort type
+)
+{
+	UNREFERENCED_PARAMETER(context);
+	UNREFERENCED_PARAMETER(queue);
+
+	switch (type)
+	{
+	case XTaskQueuePort::Work:
+		SetEvent(g_workReadyHandle.get());
+		break;
+
+	case XTaskQueuePort::Completion:
+		SetEvent(g_completionReadyHandle.get());
+		break;
+	}
+}
+
+void StartBackgroundThread()
+{
+	g_stopRequestedHandle.set(CreateEvent(nullptr, true, false, nullptr));
+	g_workReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
+	g_completionReadyHandle.set(CreateEvent(nullptr, false, false, nullptr));
+	g_exampleTaskDone.set(CreateEvent(nullptr, false, false, nullptr));
+
+	for (uint32_t i = 0; i < g_targetNumThreads; i++)
+	{
+		g_hActiveThreads[i] = CreateThread(nullptr, 0, background_thread_proc, nullptr, 0, nullptr);
+		if (g_defaultIdealProcessor != MAXIMUM_PROCESSORS)
+		{
+			if (g_hActiveThreads[i] != nullptr)
+			{
+				SetThreadIdealProcessor(g_hActiveThreads[i], g_defaultIdealProcessor);
+			}
+		}
+	}
+
+	g_numActiveThreads = g_targetNumThreads;
+}
+
+void ShutdownActiveThreads()
+{
+	SetEvent(g_stopRequestedHandle.get());
+	DWORD dwResult = WaitForMultipleObjectsEx(g_numActiveThreads, g_hActiveThreads, true, INFINITE, false);
+	if (dwResult >= WAIT_OBJECT_0 && dwResult <= WAIT_OBJECT_0 + g_numActiveThreads - 1)
+	{
+		for (DWORD i = 0; i < g_numActiveThreads; i++)
+		{
+			CloseHandle(g_hActiveThreads[i]);
+			g_hActiveThreads[i] = nullptr;
+		}
+		g_numActiveThreads = 0;
+		ResetEvent(g_stopRequestedHandle.get());
+	}
+}
+
+struct WebSocketContext
+{
+	WebSocketContext()
+	{
+		closeEventHandle = CreateEvent(nullptr, false, false, nullptr);
+	}
+
+	~WebSocketContext()
+	{
+		if (handle)
+		{
+			HCWebSocketCloseHandle(handle);
+		}
+		CloseHandle(closeEventHandle);
+	}
+
+	HCWebsocketHandle handle{ nullptr };
+	std::vector<char> receiveBuffer;
+	std::atomic<uint32_t> messagesReceived;
+	HANDLE closeEventHandle;
+};
+
+void CALLBACK WebSocketMessageReceived(
+	_In_ HCWebsocketHandle websocket,
+	_In_z_ const char* incomingBodyString,
+	_In_opt_ void* functionContext
+)
+{
+	auto ctx = static_cast<WebSocketContext*>(functionContext);
+
+	printf_s("Received websocket message: %s\n", incomingBodyString);
+	++ctx->messagesReceived;
+}
+
+void CALLBACK WebSocketBinaryMessageReceived(
+	_In_ HCWebsocketHandle websocket,
+	_In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+	_In_ uint32_t payloadSize,
+	_In_ void* functionContext
+)
+{
+	auto ctx = static_cast<WebSocketContext*>(functionContext);
+
+	printf_s("Received websocket binary message of size: %u\r\n", payloadSize);
+
+	++ctx->messagesReceived;
+}
+
+void CALLBACK WebSocketBinaryMessageFragmentReceived(
+	_In_ HCWebsocketHandle websocket,
+	_In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+	_In_ uint32_t payloadSize,
+	_In_ bool isFinalFragment,
+	_In_ void* functionContext
+)
+{
+	auto ctx = static_cast<WebSocketContext*>(functionContext);
+
+	printf("Received websocket binary message fragment of size %u\r\n", payloadSize);
+	ctx->receiveBuffer.insert(ctx->receiveBuffer.end(), payloadBytes, payloadBytes + payloadSize);
+	if (isFinalFragment)
+	{
+		printf_s("Full message now received: %s\n", ctx->receiveBuffer.data());
+		++ctx->messagesReceived;
+		ctx->receiveBuffer.clear();
+	}
+}
+
+void CALLBACK WebSocketClosed(
+	_In_ HCWebsocketHandle websocket,
+	_In_ HCWebSocketCloseStatus closeStatus,
+	_In_opt_ void* functionContext
+)
+{
+	auto ctx = static_cast<WebSocketContext*>(functionContext);
+
+	printf_s("Websocket closed!\n");
+	SetEvent(ctx->closeEventHandle);
+}
+
 
 // Simple Base64 encoding table
 const char* base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -231,235 +459,108 @@ void DumpWinHttpErrorResponse(HINTERNET hRequest)
 		std::cout << "[i] No response body available or query failed." << std::endl;
 	}
 }
+
 void ConnectWebSocket(const std::wstring& fullUrl, const std::wstring& accessToken)
 {
-	URL_COMPONENTS urlComp = { sizeof(urlComp) };
-	wchar_t hostName[256], urlPath[4096];
-	urlComp.lpszHostName = hostName;
-	urlComp.dwHostNameLength = _countof(hostName);
-	urlComp.lpszUrlPath = urlPath;
-	urlComp.dwUrlPathLength = _countof(urlPath);
-	if (!WinHttpCrackUrl(fullUrl.c_str(), 0, 0, &urlComp)) {
-		std::wcerr << L"WinHttpCrackUrl failed: " << GetLastError() << L"\n";
-		return;
-	}
 
-	HINTERNET hSession = WinHttpOpen(L"SignalRClient", WINHTTP_ACCESS_TYPE_NO_PROXY,
-		WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
-	if (!hSession) {
-		std::wcerr << L"WinHttpOpen failed: " << GetLastError() << L"\n";
-		return;
-	}
+	HCInitialize(nullptr);
+	HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
 
-	DWORD secureProtocols = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
-	WinHttpSetOption(hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secureProtocols, sizeof(secureProtocols));
-	WinHttpSetTimeouts(hSession, 5000, 10000, 10000, 30000);
+	XTaskQueueCreate(XTaskQueueDispatchMode::Manual, XTaskQueueDispatchMode::Manual, &g_queue);
+	XTaskQueueRegisterMonitor(g_queue, nullptr, HandleAsyncQueueCallback, &g_callbackToken);
+	StartBackgroundThread();
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+	std::string url = converter.to_bytes(fullUrl);
 
-	HINTERNET hConnect = WinHttpConnect(hSession, urlComp.lpszHostName, INTERNET_DEFAULT_HTTPS_PORT, 0);
-	if (!hConnect) {
-		std::wcerr << L"WinHttpConnect failed: " << GetLastError() << L"\n";
-		WinHttpCloseHandle(hSession);
-		return;
-	}
+	auto websocketContext = new WebSocketContext{};
+	HCWebSocketCreate(&websocketContext->handle, WebSocketMessageReceived, WebSocketBinaryMessageReceived, WebSocketClosed, websocketContext);
+	HCWebSocketSetBinaryMessageFragmentEventFunction(websocketContext->handle, WebSocketBinaryMessageFragmentReceived);
+	HCWebSocketSetMaxReceiveBufferSize(websocketContext->handle, 4096);
 
-	HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", urlComp.lpszUrlPath, NULL, WINHTTP_NO_REFERER,
-		WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
-	if (!hRequest) {
-		std::wcerr << L"WinHttpOpenRequest failed: " << GetLastError() << L"\n";
-		WinHttpCloseHandle(hConnect);
-		WinHttpCloseHandle(hSession);
-		return;
-	}
+	XAsyncBlock* asyncBlock = new XAsyncBlock{};
+	asyncBlock->queue = g_queue;
+	asyncBlock->callback = [](XAsyncBlock* asyncBlock)
+		{
+			WebSocketCompletionResult result = {};
+			HRESULT hr = HCGetWebSocketConnectResult(asyncBlock, &result);
+			assert(SUCCEEDED(hr));
 
-	// WebSocket headers
-	std::wstring secWebSocketKey = ConvertToWide(generateRandomSecWebSocketKey());
-	std::wstring headers =
-		L"Connection: Upgrade\r\n"
-		L"Upgrade: websocket\r\n"
-		L"Sec-WebSocket-Version: 13\r\n"
-		L"Sec-WebSocket-Key: " + secWebSocketKey + L"\r\n"
-		L"Pragma: no-cache\r\n"
-		L"Cache-Control: no-cache\r\n"
-		L"Origin: console\r\n";
+			if (SUCCEEDED(hr))
+			{
+				printf_s("HCWebSocketConnect complete: %d, %d\n", result.errorCode, result.platformErrorCode);
+				if (FAILED(result.errorCode))
+				{
+					throw std::exception("Connect failed. Make sure a local echo server is running.");
+				}
+			}
 
-	WinHttpAddRequestHeaders(hRequest, headers.c_str(), -1, WINHTTP_ADDREQ_FLAG_ADD);
+			delete asyncBlock;
+		};
 
-	// Set option to upgrade to WebSocket
-	DWORD option = WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET;
-	WinHttpSetOption(hRequest, WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, &option, sizeof(option));
+	printf_s("Calling HCWebSocketConnect...\n");
+	HCWebSocketConnectAsync(url.data(), "", websocketContext->handle, asyncBlock);
+	XAsyncGetStatus(asyncBlock, true);
 
-	std::wcout << L"[i] Sending WebSocket request...\n" << headers << L"\n";
-
-	if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) {
-		std::wcerr << L"[!] SendRequest failed. Error code: " << GetLastError() << L"\n";
-		DumpWinHttpErrorResponse(hRequest);
-		WinHttpCloseHandle(hRequest);
-		WinHttpCloseHandle(hConnect);
-		WinHttpCloseHandle(hSession);
-		return;
-	}
-
-	if (!WinHttpReceiveResponse(hRequest, 0)) {
-		std::wcerr << L"[!] ReceiveResponse failed. Error code: " << GetLastError() << L"\n";
-		DumpWinHttpErrorResponse(hRequest);
-		WinHttpCloseHandle(hRequest);
-		WinHttpCloseHandle(hConnect);
-		WinHttpCloseHandle(hSession);
-		return;
-	}
-
-	HINTERNET hWebSocket = WinHttpWebSocketCompleteUpgrade(hRequest, 0);
-	if (!hWebSocket) {
-		std::wcerr << L"[!] WebSocket upgrade failed. Error code: " << GetLastError() << L"\n";
-		DumpWinHttpErrorResponse(hRequest);
-		WinHttpCloseHandle(hRequest);
-		WinHttpCloseHandle(hConnect);
-		WinHttpCloseHandle(hSession);
-		return;
-	}
-
-	std::wcout << L"[+] WebSocket connection established.\n";
-
-	const char* handshake = "{\"protocol\":\"json\",\"version\":1}\x1e"; // Signalr needs the \x1e for line separation of json body
-	WinHttpWebSocketSend(hWebSocket, WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE, (PVOID)handshake, strlen(handshake));
-
-	WinHttpWebSocketClose(hWebSocket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
-
-	WinHttpCloseHandle(hWebSocket);
-	WinHttpCloseHandle(hRequest);
-	WinHttpCloseHandle(hConnect);
-	WinHttpCloseHandle(hSession);
-}
-
-void TestWebSocketEcho()
-{
-	LPCWSTR hostname = L"ws.postman-echo.com";
-	INTERNET_PORT port = INTERNET_DEFAULT_HTTPS_PORT;
-
-	HINTERNET hSession = WinHttpOpen(L"WebSocket Test/1.0",
-		WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME,
-		WINHTTP_NO_PROXY_BYPASS, 0);
-
-	if (!hSession) {
-		std::wcerr << L"WinHttpOpen failed\n";
-		return;
-	}
-
-	HINTERNET hConnect = WinHttpConnect(hSession, hostname, port, 0);
-	if (!hConnect) {
-		std::wcerr << L"WinHttpConnect failed\n";
-		WinHttpCloseHandle(hSession);
-		return;
-	}
-
-	HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", L"/raw",
-		NULL, WINHTTP_NO_REFERER,
-		WINHTTP_DEFAULT_ACCEPT_TYPES,
-		0);
-
-	if (!hRequest) {
-		std::wcerr << L"WinHttpOpenRequest failed\n";
-		WinHttpCloseHandle(hConnect);
-		WinHttpCloseHandle(hSession);
-		return;
-	}
-
-	LPCWSTR headers = L"Connection: Upgrade\r\n"
-		L"Upgrade: websocket\r\n"
-		L"Sec-WebSocket-Version: 13\r\n"
-		L"Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits\r\n"
-		L"Origin: http://localhost\r\n";
-
-	std::wstring key = ConvertToWide(generateRandomSecWebSocketKey());
-	std::wstring fullHeaders = headers;
-	fullHeaders += L"Sec-WebSocket-Key: " + key + L"\r\n";
-
-	if (!WinHttpSendRequest(hRequest, fullHeaders.c_str(), (DWORD)-1,
-		WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) {
-		std::wcerr << L"WinHttpSendRequest failed\n";
-		WinHttpCloseHandle(hRequest);
-		WinHttpCloseHandle(hConnect);
-		WinHttpCloseHandle(hSession);
-		return;
-	}
-
-	if (!WinHttpReceiveResponse(hRequest, NULL))
+	uint32_t sendLoops = 2;
+	for (uint32_t i = 1; i <= sendLoops; i++)
 	{
-		DWORD error = GetLastError();
-		std::wcerr << L"ReceiveResponse failed. Error code: " << error << L"\n";
+		// Test with message just larger than the configured receive buffer size
+		char webMsg[4100];
+		for (uint32_t j = 0; j < sizeof(webMsg); ++j)
+		{
+			webMsg[j] = 'X';
+		}
+		webMsg[sizeof(webMsg) - 1] = '\0';
 
-		wchar_t errorMsg[512];
-		FormatMessageW(
-			FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL, error,
-			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			errorMsg, sizeof(errorMsg) / sizeof(wchar_t),
-			NULL);
-		std::wcerr << L"Error description: " << errorMsg << L"\n";
-		return;
-	}
-	DWORD statusCode = 0;
-	DWORD statusCodeSize = sizeof(statusCode);
+		asyncBlock = new XAsyncBlock{};
+		asyncBlock->queue = g_queue;
+		asyncBlock->callback = [](XAsyncBlock* asyncBlock)
+			{
+				WebSocketCompletionResult result = {};
+				HRESULT hr = HCGetWebSocketSendMessageResult(asyncBlock, &result);
+				assert(SUCCEEDED(hr));
 
-	// FIXED: Query the response status code correctly
-	if (!WinHttpQueryHeaders(
-		hRequest,
-		WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
-		NULL,
-		&statusCode,
-		&statusCodeSize,
-		WINHTTP_NO_HEADER_INDEX)) {
+				if (SUCCEEDED(hr))
+				{
+					printf_s("HCWebSocketSendMessage complete: %d, %d\n", result.errorCode, result.platformErrorCode);
+				}
+				delete asyncBlock;
+			};
 
-		DWORD err = GetLastError();
-		std::wcerr << L"WinHttpQueryHeaders failed: " << err << L"\n";
-	}
-	else {
-		std::wcout << L"Status code: " << statusCode << L"\n";
-	}
-	if (statusCode != 101) {
-		std::wcerr << L"Server did not accept WebSocket upgrade. Status code: " << statusCode << L"\n";
-		// Handle error
-	}
+		printf_s("Calling HCWebSocketSend with message \"%s\" and waiting for response...\n", webMsg);
+		HCWebSocketSendMessageAsync(websocketContext->handle, webMsg, asyncBlock);
 
-	HINTERNET hWebSocket = WinHttpWebSocketCompleteUpgrade(hRequest, 0);
-	if (!hWebSocket) {
-		std::wcerr << L"WebSocket upgrade failed: " << GetLastError() << L"\n";
-		WinHttpCloseHandle(hRequest);
-		WinHttpCloseHandle(hConnect);
-		WinHttpCloseHandle(hSession);
-		return;
-	}
+		asyncBlock = new XAsyncBlock{};
+		asyncBlock->queue = g_queue;
+		asyncBlock->callback = [](XAsyncBlock* asyncBlock)
+			{
+				WebSocketCompletionResult result = {};
+				HRESULT hr = HCGetWebSocketSendMessageResult(asyncBlock, &result);
+				assert(SUCCEEDED(hr));
 
-	std::wcout << L"WebSocket connection established.\n";
+				if (SUCCEEDED(hr))
+				{
+					printf_s("HCWebSocketSendBinaryMessageAsync complete: %d, %d\n", result.errorCode, result.platformErrorCode);
+				}
 
-	const char* msg = "Hello, WebSocket!";
-	DWORD written = 0;
-	if (WinHttpWebSocketSend(hWebSocket, WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE,
-		(PVOID)msg, (DWORD)strlen(msg)) != NO_ERROR) {
-		std::wcerr << L"Failed to send message\n";
-	}
-	else {
-		std::wcout << L"Message sent.\n";
+				delete asyncBlock;
+			};
+
+		HCWebSocketSendBinaryMessageAsync(websocketContext->handle, (uint8_t*)webMsg, 100, asyncBlock);
 	}
 
-	BYTE recvBuffer[1024];
-	DWORD bytesRead = 0;
-	WINHTTP_WEB_SOCKET_BUFFER_TYPE bufferType;
-	if (WinHttpWebSocketReceive(hWebSocket, recvBuffer, sizeof(recvBuffer), &bytesRead, &bufferType) == NO_ERROR) {
-		std::string reply((char*)recvBuffer, bytesRead);
-		std::wcout << L"Received: " << std::wstring(reply.begin(), reply.end()) << L"\n";
-	}
-	else {
-		std::wcerr << L"Failed to receive message\n";
+	while (websocketContext->messagesReceived < sendLoops * 2) // Two messages sent each loop iteration
+	{
+		Sleep(10);
 	}
 
-	WinHttpWebSocketClose(hWebSocket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, NULL, 0);
-	WinHttpCloseHandle(hWebSocket);
-	WinHttpCloseHandle(hConnect);
-	WinHttpCloseHandle(hSession);
+	printf_s("Calling HCWebSocketDisconnect...\n");
+	HCWebSocketDisconnect(websocketContext->handle);
+	WaitForSingleObject(websocketContext->closeEventHandle, INFINITE);
+	delete websocketContext;
 
+	HCCleanup();
 }
-
 
 int main()
 {
