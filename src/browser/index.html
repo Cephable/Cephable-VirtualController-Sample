@@ -1,150 +1,148 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-  <head>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.2/signalr.min.js"
-      integrity="sha512-YXK3VHvk8oUFEYl3/DkoQ8dRIQWl7+igjOu1kW5TWKqdrvxCcQU6XgpzFSNMSO6ectu0EedR0aRcGcDFuW7eCA=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    ></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script>
-      const apiBaseUrl = "https://services.cephable.com/"; 
-      let deviceToken = null;
-      let accessToken = null;
-      let clientId = null;
-      let currentDevice = null;
-      const signIn = async () => {
-        clientId = document.getElementById("client_id_field").value;
-        if (!clientId) {
-          alert("Please enter your Cephable Client Id");
-          return;
-        }
-        localStorage.setItem("clientId", clientId);
-        const redirectUri = window.location.origin + window.location.pathname;
-        const authUrl = `${apiBaseUrl}signin?redirect_uri=${encodeURIComponent(
-          redirectUri
-        )}&client_id=${clientId}`;
-        window.location.href = authUrl;
-      };
+    <head>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.2/signalr.min.js"
+            integrity="sha512-YXK3VHvk8oUFEYl3/DkoQ8dRIQWl7+igjOu1kW5TWKqdrvxCcQU6XgpzFSNMSO6ectu0EedR0aRcGcDFuW7eCA=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        ></script>
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+        <script>
+            const apiBaseUrl = 'http://localhost:3002/'
+            let deviceToken = null
+            let accessToken = null
+            let clientId = null
+            let currentDevice = null
+            const signIn = async () => {
+                clientId = document.getElementById('client_id_field').value
+                if (!clientId) {
+                    alert('Please enter your Cephable Client Id')
+                    return
+                }
+                localStorage.setItem('clientId', clientId)
+                const redirectUri = window.location.origin + window.location.pathname
+                const authUrl = `${apiBaseUrl}signin?redirect_uri=${encodeURIComponent(redirectUri)}&client_id=${clientId}`
+                window.location.href = authUrl
+            }
 
-      const getAccessToken = async (code) => {
-        const redirectUri = window.location.origin + window.location.pathname;
-        const response = await axios.post(
-          `${apiBaseUrl}signin/token?client_id=${clientId}&code=${encodeURIComponent(code)}&redirect_uri=${encodeURIComponent(
-            redirectUri
-          )}&grant_type=code`
-        );
-        return response.data.access_token;
-      };
+            const getAccessToken = async (code) => {
+                const redirectUri = window.location.origin + window.location.pathname
+                const response = await axios.post(
+                    `${apiBaseUrl}signin/token?client_id=${clientId}&code=${encodeURIComponent(code)}&redirect_uri=${encodeURIComponent(redirectUri)}&grant_type=code`,
+                )
+                return response.data.access_token
+            }
 
-      const createUserDevice = async (deviceTypeId) => {
-        const response = await axios.post(
-          `${apiBaseUrl}api/Device/userDevices/new/${deviceTypeId}?name=Web-Sample`
-        );
-        return response.data;
-      };
+            const createUserDevice = async (deviceTypeId) => {
+                const response = await axios.post(`${apiBaseUrl}api/Device/userDevices/new/${deviceTypeId}?name=Web-Sample`)
+                return response.data
+            }
 
-      const createUserDeviceToken = async (userDeviceId) => {
-        const response = await axios.post(
-          `${apiBaseUrl}api/Device/userDevices/${userDeviceId}/tokens`
-        );
-        return response.data.token;
-      };
+            const createUserDeviceToken = async (userDeviceId) => {
+                const response = await axios.post(`${apiBaseUrl}api/Device/userDevices/${userDeviceId}/tokens`)
+                return response.data.token
+            }
 
-      const startSignalRConnection = async () => {
-        const connection = new signalR.HubConnectionBuilder()
-          .withUrl(`${apiBaseUrl}device`, {
-            accessTokenFactory: () => deviceToken,
-            headers: {
-              "X-Device-Token": deviceToken,
-            },
-          })
-          .withAutomaticReconnect()
-          .build();
+            const startSignalRConnection = async () => {
+                const connection = new signalR.HubConnectionBuilder()
+                    .withUrl(`${apiBaseUrl}device`, {
+                        accessTokenFactory: () => deviceToken,
+                        headers: {
+                            'X-Device-Token': deviceToken,
+                        },
+                    })
+                    .withAutomaticReconnect()
+                    .build()
 
-        connection.on("DeviceCommand", function (command, macro) {
-          console.log("Received command: " + command);
-          console.log("Received macro: " + JSON.stringify(macro));
-          console.log("Current device: " + JSON.stringify(currentDevice));
+                connection.on('DeviceCommand', function (command, macro) {
+                    console.log('Received command: ' + command)
+                    console.log('Received macro: ' + JSON.stringify(macro))
+                    console.log('Current device: ' + JSON.stringify(currentDevice))
 
-          const commandsList = document.getElementById("commands");
-          const li = document.createElement("li");
-          li.appendChild(document.createTextNode(command));
-          commandsList.appendChild(li);
-        });
+                    const commandsList = document.getElementById('commands')
+                    const li = document.createElement('li')
+                    li.appendChild(document.createTextNode(command))
+                    commandsList.appendChild(li)
+                })
 
-        await connection
-          .start({ withCredentials: false })
-          .then(async function () {
-            console.log("Connected to hub. Waiting for commands...");
-            currentDevice = await connection.invoke("VerifySelf");
-          })
-          .catch(function (err) {
-            return console.error(err.toString());
-          });
-      };
+                await connection
+                    .start({ withCredentials: false })
+                    .then(async function () {
+                        console.log('Connected to hub. Waiting for commands...')
+                        currentDevice = await connection.invoke('VerifySelf')
+                    })
+                    .catch(function (err) {
+                        return console.error(err.toString())
+                    })
+            }
 
-      const main = async () => {
-        var existingDevice = localStorage.getItem("device");
-        if (existingDevice) {
-          existingDevice = JSON.parse(existingDevice);
-          console.log(existingDevice);
-          deviceToken = localStorage.getItem("deviceToken");
-          accessToken = localStorage.getItem("accessToken");
-          await startSignalRConnection();
+            const main = async () => {
+                const params = new URLSearchParams(window.location.search)
 
-          document.getElementById("sign_in_button").style.display = "none";
-          document.getElementById("client_id_field").style.display = "none";
+                // If we have a code parameter, process it (new OAuth callback)
+                if (params.has('code')) {
+                    clientId = localStorage.getItem('clientId')
 
-          return;
-        }
+                    const code = params.get('code')
+                    accessToken = await getAccessToken(code)
+                    // set the default authorization header for axios
+                    axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
+                    localStorage.setItem('accessToken', accessToken)
 
-        const params = new URLSearchParams(window.location.search);
-        if (!params.has("code")) {
-          return;
-        }
-        var existingDevice = localStorage.getItem("device");
-        if (existingDevice) {
-          existingDevice = JSON.parse(existingDevice);
-          console.log(existingDevice);
-          deviceToken = localStorage.getItem("deviceToken");
-          accessToken = localStorage.getItem("accessToken");
-          await startSignalRConnection();
-          return;
-        }
+                    const deviceTypeId = 'c8c28ec2-4177-464f-94ef-c22508f9acc4' // Change this to your device type id
+                    const userDevice = await createUserDevice(deviceTypeId)
+                    localStorage.setItem('device', JSON.stringify(userDevice))
+                    deviceToken = await createUserDeviceToken(userDevice.id)
+                    localStorage.setItem('deviceToken', deviceToken)
+                    await startSignalRConnection()
 
-        clientId = localStorage.getItem("clientId");
+                    document.getElementById('sign_in_button').style.display = 'none'
+                    document.getElementById('client_id_field').style.display = 'none'
+                    return
+                }
 
-        const code = params.get("code");
-        accessToken = await getAccessToken(code);
-        // set the default authorization header for axios
-        axios.defaults.headers.common[
-          "Authorization"
-        ] = `Bearer ${accessToken}`;
-        localStorage.setItem("accessToken", accessToken);
+                // Otherwise, check if we have an existing device
+                var existingDevice = localStorage.getItem('device')
+                if (existingDevice) {
+                    existingDevice = JSON.parse(existingDevice)
+                    console.log(existingDevice)
+                    deviceToken = localStorage.getItem('deviceToken')
+                    accessToken = localStorage.getItem('accessToken')
+                    await startSignalRConnection()
 
-        const deviceTypeId = "49c60e4e-2543-4c04-9332-f51e5678465f"; // Change this to your device type id
-        const userDevice = await createUserDevice(deviceTypeId);
-        localStorage.setItem("device", JSON.stringify(userDevice));
-        deviceToken = await createUserDeviceToken(userDevice.id);
-        localStorage.setItem("deviceToken", deviceToken);
-        await startSignalRConnection();
-      };
+                    document.getElementById('sign_in_button').style.display = 'none'
+                    document.getElementById('client_id_field').style.display = 'none'
 
-      main();
-    </script>
-  </head>
+                    return
+                }
 
-  <body>
-    <h1>Cephable Virtual Controller Sample</h1>
-    <p>Checkout the Readme.md for more instructions</p>
-    <input
-      id="client_id_field"
-      placeholder="Enter your Cephable Client Id"
-    />
-    <button id="sign_in_button" onclick="signIn()">Sign In</button>
-    <p>Waiting for commands... Check the console to view them</p>
-    <ul id="commands"></ul>
-  </body>
+                clientId = localStorage.getItem('clientId')
+
+                const code = params.get('code')
+                accessToken = await getAccessToken(code)
+                // set the default authorization header for axios
+                axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
+                localStorage.setItem('accessToken', accessToken)
+
+                const deviceTypeId = 'c8c28ec2-4177-464f-94ef-c22508f9acc4' // Change this to your device type id
+                const userDevice = await createUserDevice(deviceTypeId)
+                localStorage.setItem('device', JSON.stringify(userDevice))
+                deviceToken = await createUserDeviceToken(userDevice.id)
+                localStorage.setItem('deviceToken', deviceToken)
+                await startSignalRConnection()
+            }
+
+            main()
+        </script>
+    </head>
+
+    <body>
+        <h1>Cephable Virtual Controller Sample</h1>
+        <p>Checkout the Readme.md for more instructions</p>
+        <input id="client_id_field" placeholder="Enter your Cephable Client Id" />
+        <button id="sign_in_button" onclick="signIn()">Sign In</button>
+        <p>Waiting for commands... Check the console to view them</p>
+        <ul id="commands"></ul>
+    </body>
 </html>
